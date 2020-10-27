@@ -1,0 +1,28 @@
+name: ynot_torch1p6
+channels:
+  - pytorch
+  - defaults
+  - conda-forge
+dependencies:
+  - python=3.8
+  - numpy
+  - scipy
+  - matplotlib
+  - astropy
+  - tqdm
+  - pandas
+  - jupyter
+  - ipython
+  - seaborn
+  - scikit-learn
+  - pyarrow
+  - pytorch
+  - torchvision
+  - pytest
+  - pip
+  - cmake
+  - sphinx
+  - celerite
+  - pip:
+    - kornia
+    - pykeops
