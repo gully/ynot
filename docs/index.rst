@@ -10,6 +10,8 @@ Welcome to ynot's documentation!
    :maxdepth: 2
    :caption: Contents:
 
+    Installation <about/install>
+
 Currently this project requires NVIDIA GPUs.  To check if you have a GPU available:
 
 .. code-block:: python
