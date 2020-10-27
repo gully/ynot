@@ -23,6 +23,7 @@ dependencies:
   - cmake
   - sphinx
   - celerite
+  - black
   - pip:
     - kornia
     - pykeops

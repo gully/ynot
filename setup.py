@@ -1,9 +1,8 @@
 import setuptools
 
 
-
 setuptools.setup(
-    name="ynot-astro",
+    name="ynot",
     version="0.1",
     author="gully",
     author_email="igully@gmail.com",
