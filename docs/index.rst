@@ -11,6 +11,7 @@ Welcome to ynot's documentation!
    :caption: Contents:
 
     Installation <about/install>
+    Application Programming Interface <api>
 
 Currently this project requires NVIDIA GPUs.  To check if you have a GPU available:
 
