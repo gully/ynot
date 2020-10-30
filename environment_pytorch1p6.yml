@@ -16,7 +16,7 @@ dependencies:
   - seaborn
   - scikit-learn
   - pyarrow
-  - pytorch
+  - pytorch>=1.6
   - torchvision
   - pytest
   - pip
@@ -27,3 +27,4 @@ dependencies:
   - pip:
     - kornia
     - pykeops
+    - sphinx-nervproject-theme

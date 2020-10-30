@@ -3,8 +3,17 @@
    You can adapt this file completely to your liking, but it should at least
    contain the root `toctree` directive.
 
-Welcome to ynot's documentation!
-================================
+Welcome to the `ynot` documentation!
+====================================
+
+The `ynot` project aims to improve the astronomical echelle spectroscopy data reduction process through three key ideas:
+
+1. Propagating the native pixel uncertainty, without interpolating noisy pixels
+2. Employing an interpretable model in which all parameters are varied at the same time
+3. Encouraging extensibility and modularity for a wide range of scientific applications
+
+We invite you to engage with us at our `GitHub page
+<http://www.github.com/gully/ynot>`_, with pull requests and discussions welcomed.  
 
 .. toctree::
    :maxdepth: 2
