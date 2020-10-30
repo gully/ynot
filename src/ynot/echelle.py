@@ -41,10 +41,9 @@ class Echellogram(nn.Module):
         )
         self.n_amps = 2000
         self.amps = nn.Parameter(
-            torch.ones(self.n_amps,
-            requires_grad=True,
-            dtype=torch.float64,
-            device=device)
+            torch.ones(
+                self.n_amps, requires_grad=True, dtype=torch.float64, device=device
+            )
         )
 
         self.smoothness = nn.Parameter(
@@ -91,12 +90,12 @@ class Echellogram(nn.Module):
 
     def s_of_xy(self, params):
         """
-        Return the along-slit coordinate :math`s` as a function of :math`(x,y)`
+        Return the along-slit coordinate :math:`s` as a function of :math:`(x,y)`
 
         Args:
             params (torch.tensor or tuple): the coefficents relating s to (x,y).
         Returns:
-            (torch.tensor): the 2D map of math:`s(x,y)`
+            (torch.tensor): the 2D map of :math:`s(x,y)`
         """
         y0, kk, dy0_dx = params
         s_out = kk * ((self.yy - y0) - dy0_dx * self.xx)
