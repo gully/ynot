@@ -44,11 +44,11 @@ class Echellogram(nn.Module):
             torch.ones(self.n_amps),
             requires_grad=True,
             dtype=torch.float64,
-            device="cuda",
+            device=device,
         )
 
         self.smoothness = nn.Parameter(
-            torch.tensor(-2.27, requires_grad=True, dtype=torch.float64, device="cuda")
+            torch.tensor(-2.27, requires_grad=True, dtype=torch.float64, device=device)
         )
 
         self.lam_coeffs = nn.Parameter(
@@ -56,7 +56,7 @@ class Echellogram(nn.Module):
                 [0.0, 0.0, 1.0, -0.7923],
                 requires_grad=True,
                 dtype=torch.float64,
-                device="cuda",
+                device=device,
             )
         )
 
@@ -65,19 +65,15 @@ class Echellogram(nn.Module):
                 [[3.0, -1.0], [9.0, -1.0]],
                 requires_grad=True,
                 dtype=torch.float64,
-                device="cuda",
+                device=device,
             )
         )
         self.src_amps = nn.Parameter(
-            self.amps.clone().detach().requires_grad_(True).double().cuda()
+            self.amps.clone().detach().requires_grad_(True).double().to(device)
         )
 
-        self.b = nn.Parameter(
-            torch.tensor(5.0, requires_grad=True, dtype=torch.float64)
-        )
-        self.a = nn.Parameter(
-            torch.tensor([0.00, 0.50], requires_grad=True, dtype=torch.float64)
-        )
+        self._ss = None
+        self._emask = None
 
     def forward(self, x):
         # Computes the outputs / predictions
@@ -105,6 +101,14 @@ class Echellogram(nn.Module):
         s_out = kk * ((self.yy - y0) - dy0_dx * self.xx)
         return s_out
 
+    @property
+    def ss(self):
+        return self._ss
+
+    @ss.setter
+    def ss(self, params):
+        self._ss = self.s_of_xy(params)
+
     def edge_mask(self, smoothness):
         """Apply the product of two sigmoid functions to make a smooth tophat"""
         arg1 = self.ss - 0.0
@@ -115,3 +119,11 @@ class Echellogram(nn.Module):
             * 1.0
             / (1.0 + torch.exp(-arg2 / torch.exp(smoothness)))
         )
+
+    @property
+    def emask(self):
+        return self._emask
+
+    @emask.setter
+    def emask(self, param):
+        self._emask = self.edge_mask(param)
