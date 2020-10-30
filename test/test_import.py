@@ -1,10 +1,10 @@
 import pytest
-
+import torch
+import time
 
 def test_cuda():
 
-    # Test that torch impport and that cuda is available
-    import torch
+    # Test that cuda is available
 
     assert torch.cuda.is_available()
 
@@ -13,10 +13,6 @@ def test_cuda():
 
 
 def test_big_matrices_cuda():
-
-    # Test that torch impport and that cuda is available
-    import torch
-    import time
 
     devices = ["cuda"]
     dim = 10000
@@ -29,3 +25,12 @@ def test_big_matrices_cuda():
         net_time = t1 - t0
         print("{}: {:0.1f} seconds".format(device, net_time))
         assert net_time < 60.0
+
+def test_module_import():
+
+    from ynot.echelle import Echellogram
+
+    echellogram = Echellogram()
+
+
+#def test_property_setting():

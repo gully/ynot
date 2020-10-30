@@ -41,10 +41,10 @@ class Echellogram(nn.Module):
         )
         self.n_amps = 2000
         self.amps = nn.Parameter(
-            torch.ones(self.n_amps),
+            torch.ones(self.n_amps,
             requires_grad=True,
             dtype=torch.float64,
-            device=device,
+            device=device)
         )
 
         self.smoothness = nn.Parameter(
