@@ -27,6 +27,51 @@ class Echellogram(nn.Module):
         self.yvec = torch.arange(0, self.ny, 1.0)
         self.xx, self.yy = torch.meshgrid(self.xvec, self.yvec)
 
+        self.bkg_const = nn.Parameter(
+            torch.tensor(200.0, requires_grad=True, dtype=torch.float64, device=device)
+        )
+        # self.sky_const = nn.Parameter(torch.tensor(50.0, requires_grad=True, dtype=torch.float64, device='cuda'))
+        self.s_coeffs = nn.Parameter(
+            torch.tensor(
+                [14.635, 0.20352, -0.004426],
+                requires_grad=True,
+                dtype=torch.float64,
+                device="cuda",
+            )
+        )
+        self.n_amps = 2000
+        self.amps = nn.Parameter(
+            torch.ones(self.n_amps),
+            requires_grad=True,
+            dtype=torch.float64,
+            device="cuda",
+        )
+
+        self.smoothness = nn.Parameter(
+            torch.tensor(-2.27, requires_grad=True, dtype=torch.float64, device="cuda")
+        )
+
+        self.lam_coeffs = nn.Parameter(
+            torch.tensor(
+                [0.0, 0.0, 1.0, -0.7923],
+                requires_grad=True,
+                dtype=torch.float64,
+                device="cuda",
+            )
+        )
+
+        self.p_coeffs = nn.Parameter(
+            torch.tensor(
+                [[3.0, -1.0], [9.0, -1.0]],
+                requires_grad=True,
+                dtype=torch.float64,
+                device="cuda",
+            )
+        )
+        self.src_amps = nn.Parameter(
+            self.amps.clone().detach().requires_grad_(True).double().cuda()
+        )
+
         self.b = nn.Parameter(
             torch.tensor(5.0, requires_grad=True, dtype=torch.float64)
         )
@@ -59,3 +104,14 @@ class Echellogram(nn.Module):
         y0, kk, dy0_dx = params
         s_out = kk * ((self.yy - y0) - dy0_dx * self.xx)
         return s_out
+
+    def edge_mask(self, smoothness):
+        """Apply the product of two sigmoid functions to make a smooth tophat"""
+        arg1 = self.ss - 0.0
+        arg2 = 12.0 - s_in
+        return (
+            1.0
+            / (1.0 + torch.exp(-arg1 / torch.exp(smoothness)))
+            * 1.0
+            / (1.0 + torch.exp(-arg2 / torch.exp(smoothness)))
+        )
