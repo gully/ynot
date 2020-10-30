@@ -26,11 +26,19 @@ def test_big_matrices_cuda():
         print("{}: {:0.1f} seconds".format(device, net_time))
         assert net_time < 60.0
 
-def test_module_import():
+def test_module_attributes():
 
     from ynot.echelle import Echellogram
 
     echellogram = Echellogram()
+
+    attributes = ['xx', 'yy', '_ss', 'ss', '_emask', 'emask', 'λλ']
+    for attribute in attributes:
+        assert hasattr(echellogram, attribute)
+
+    non_attributes = ['junk']
+    for attribute in non_attributes:
+        assert not hasattr(echellogram, attribute)
 
 
 #def test_property_setting():

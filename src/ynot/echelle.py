@@ -74,6 +74,7 @@ class Echellogram(nn.Module):
 
         self._ss = None
         self._emask = None
+        self.λλ = None
 
     def forward(self, x):
         # Computes the outputs / predictions
