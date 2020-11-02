@@ -2,6 +2,7 @@ import pytest
 import torch
 import time
 
+
 def test_cuda():
 
     # Test that cuda is available
@@ -26,19 +27,25 @@ def test_big_matrices_cuda():
         print("{}: {:0.1f} seconds".format(device, net_time))
         assert net_time < 60.0
 
-def test_module_attributes():
+
+@pytest.mark.parametrize(
+    "attribute", ["xx", "yy", "_ss", "ss", "_emask", "emask", "λλ", "\u03bb\u03bb"]
+)
+def test_valid_module_attributes(attribute):
 
     from ynot.echelle import Echellogram
 
     echellogram = Echellogram()
-
-    attributes = ['xx', 'yy', '_ss', 'ss', '_emask', 'emask', 'λλ']
-    for attribute in attributes:
-        assert hasattr(echellogram, attribute)
-
-    non_attributes = ['junk']
-    for attribute in non_attributes:
-        assert not hasattr(echellogram, attribute)
+    assert hasattr(echellogram, attribute)
 
 
-#def test_property_setting():
+@pytest.mark.parametrize("attribute", ["\u03bb\u03bb\u03bb", "junk", "λ"])
+def test_invalid_module_attributes(attribute):
+
+    from ynot.echelle import Echellogram
+
+    echellogram = Echellogram()
+    assert not hasattr(echellogram, attribute)
+
+
+# def test_property_setting():
