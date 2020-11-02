@@ -13,7 +13,7 @@ The `ynot` project aims to improve the astronomical echelle spectroscopy data re
 3. Encouraging extensibility and modularity for a wide range of scientific applications
 
 We invite you to engage with us at our `GitHub page
-<http://www.github.com/gully/ynot>`_, with pull requests and discussions welcomed.  
+<http://www.github.com/gully/ynot>`_, with pull requests and discussions welcomed.
 
 .. toctree::
    :maxdepth: 2
