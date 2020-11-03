@@ -94,7 +94,6 @@ class Echellogram(nn.Module):
         s_out = kk * ((self.yy - y0) - dy0_dx * self.xx)
         return s_out
 
-
     def edge_mask(self, smoothness):
         """Apply the product of two sigmoid functions to make a smooth tophat
 
@@ -126,44 +125,22 @@ class Echellogram(nn.Module):
             bool: Description of return value
 
         """
-        x = (self.xx-self.nx/2)/(self.nx/2)
-        y = (self.yy-self.ny/2)/(self.ny/2)
+        x = (self.xx - self.nx / 2) / (self.nx / 2)
+        y = (self.yy - self.ny / 2) / (self.ny / 2)
         const = self.fiducial[0]
-        c0 = c[0] # Shift: Angstroms ~[-3, 3]
-        cx1 = self.fiducial[1]*(1+c[1]*0.01)*self.nx/2 # Dispersion adjustment: Dimensionless ~[-1, 1]
-        cx2 = 1.0+c[2] # Pixel-dependent dispersion: Angstroms [-1.5, 1.5]
-        #cx3 = c[4] # Higher-order dispersion [-1,1]
-        cy1 = c[3] # Vertically-Tilted straight arclines [Angstroms/pixel] [ -0.3, 0.3]
+        c0 = c[0]  # Shift: Angstroms ~[-3, 3]
+        cx1 = (
+            self.fiducial[1] * (1 + c[1] * 0.01) * self.nx / 2
+        )  # Dispersion adjustment: Dimensionless ~[-1, 1]
+        cx2 = 1.0 + c[2]  # Pixel-dependent dispersion: Angstroms [-1.5, 1.5]
+        # cx3 = c[4] # Higher-order dispersion [-1,1]
+        cy1 = c[3]  # Vertically-Tilted straight arclines [Angstroms/pixel] [ -0.3, 0.3]
 
         term0 = c0
         xterm1 = cx1 * x
-        xterm2 = cx2 * (2*x**2 - 1)
-        #xterm3 = cx3 * (4*x**3 - 3*x)
+        xterm2 = cx2 * (2 * x ** 2 - 1)
+        # xterm3 = cx3 * (4*x**3 - 3*x)
         yterm1 = cy1 * y
 
-        output = const + (term0 + xterm1 + xterm2 ) + yterm1
+        output = const + (term0 + xterm1 + xterm2) + yterm1
         return output
-
-    @property
-    def ss(self):
-        return self._ss
-
-    @ss.setter
-    def ss(self, params):
-        self._ss = self.s_of_xy(params)
-
-    @property
-    def emask(self):
-        return self._emask
-
-    @emask.setter
-    def emask(self, param):
-        self._emask = self.edge_mask(param)
-
-    @property
-    def λλ(self):
-        return self._λλ
-
-    @λλ.setter
-    def λλ(self, params):
-        self._λλ = self.lam_xy(params)
