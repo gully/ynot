@@ -24,8 +24,8 @@ class Echellogram(nn.Module):
         self.fiducial = torch.tensor([21779.0, 0.310])
 
         self.nx = 1024
-        self.xvec = torch.arange(0, self.nx, 1.0)
-        self.yvec = torch.arange(0, self.ny, 1.0)
+        self.xvec = torch.arange(0, self.nx, 1.0, device=device)
+        self.yvec = torch.arange(0, self.ny, 1.0, device=device)
         self.xx, self.yy = torch.meshgrid(self.xvec, self.yvec)
 
         self.bkg_const = nn.Parameter(
@@ -37,7 +37,7 @@ class Echellogram(nn.Module):
                 [14.635, 0.20352, -0.004426],
                 requires_grad=True,
                 dtype=torch.float64,
-                device="cuda",
+                device=device,
             )
         )
         self.n_amps = 2000
@@ -99,7 +99,7 @@ class Echellogram(nn.Module):
         Currently hard-coded with a 12 arcsecond slit.
         """
         arg1 = self.ss - 0.0
-        arg2 = 12.0 - s_in
+        arg2 = 12.0 - self.ss
         return (
             1.0
             / (1.0 + torch.exp(-arg1 / torch.exp(smoothness)))
