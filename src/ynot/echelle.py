@@ -20,12 +20,12 @@ class Echellogram(nn.Module):
         self.device = device
         self.y0 = ybounds[0]
         self.ymax = ybounds[1]
-        self.ny = self.ymax = self.y0
-        self.fiducial = torch.tensor([21779.0, 0.310])
+        self.ny = self.ymax - self.y0
+        self.fiducial = torch.tensor([21779.0, 0.310], device=device).double()
 
         self.nx = 1024
-        self.xvec = torch.arange(0, self.nx, 1.0, device=device)
-        self.yvec = torch.arange(0, self.ny, 1.0, device=device)
+        self.xvec = torch.arange(0, self.nx, device=device).double()
+        self.yvec = torch.arange(0, self.ny, device=device).double()
         self.xx, self.yy = torch.meshgrid(self.xvec, self.yvec)
 
         self.bkg_const = nn.Parameter(
@@ -108,7 +108,7 @@ class Echellogram(nn.Module):
         )
 
     def lam_xy(self, c):
-        """A 2D Surface mapping :math:`(x,y)` pixels to :math:`\lambda`
+        r"""A 2D Surface mapping :math:`(x,y)` pixels to :math:`\lambda`
 
         Each (x,y) pixel coordinate maps to a single central wavelength. This
         function performs that transformation, given the coefficents of polynomials,

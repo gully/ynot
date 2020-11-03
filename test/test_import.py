@@ -29,12 +29,6 @@ def test_big_matrices_cuda(device):
     assert net_time < 60.0
 
 
-def test_devices():
-    echellogram = Echellogram()
-    print(echellogram.device)
-    assert echellogram.device in ["cuda", "cpu"]
-
-
 @pytest.mark.parametrize(
     "attribute",
     ["xx", "yy", "ss", "emask", "λλ", "device", "y0", "ymax", "\u03bb\u03bb"],
@@ -42,12 +36,21 @@ def test_devices():
 def test_valid_module_attributes(attribute):
     echellogram = Echellogram()
     assert hasattr(echellogram, attribute)
+    assert getattr(echellogram, attribute) is not None
+
+
+@pytest.mark.parametrize(
+    "attribute", ["xx", "yy", "ss", "emask", "λλ"],
+)
+def test_attributes_properties(attribute):
+    echellogram = Echellogram()
+    assert getattr(echellogram, attribute).device.type == echellogram.device
+    assert getattr(echellogram, attribute).device.type in ["cuda", "cpu"]
+    assert getattr(echellogram, attribute).shape == (echellogram.nx, echellogram.ny)
+    assert getattr(echellogram, attribute).dtype == torch.float64
 
 
 @pytest.mark.parametrize("attribute", ["\u03bb\u03bb\u03bb", "junk", "λ"])
 def test_invalid_module_attributes(attribute):
     echellogram = Echellogram()
     assert not hasattr(echellogram, attribute)
-
-
-# def test_property_setting():
