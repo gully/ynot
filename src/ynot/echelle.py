@@ -152,3 +152,13 @@ class Echellogram(nn.Module):
         """A Native-pixel model of the scene"""
         log_scene_cube = Normal(loc=lam_vec, scale=0.42).log_prob(self.λλ.unsqueeze(2))
         return (amp_of_lambda * torch.exp(log_scene_cube)).sum(axis=2)
+
+    def source_profile_simple(self, p_coeffs):
+        """The profile of the sky source, given position and width coefficients and s
+
+        p_coeffs[0]: Position in arcseconds (0,12)
+        p_coeffs[1]: Width in arcseconds ~1.0
+        """
+        sigma = torch.exp(p_coeffs[1])
+        ln_prob = Normal(loc=p_coeffs[0], scale=sigma).log_prob(self.ss)
+        return torch.exp(ln_prob)

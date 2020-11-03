@@ -50,6 +50,7 @@ def test_attributes_properties(attribute):
     assert getattr(echellogram, attribute).shape == (echellogram.nx, echellogram.ny)
     assert getattr(echellogram, attribute).dtype == torch.float64
 
+
 @pytest.mark.parametrize(
     "device", ["cuda", "cpu"],
 )
@@ -76,7 +77,7 @@ def test_scene_model(device):
     scene_model = echellogram.native_pixel_model(amplitudes, dense_λ)
     t1 = time.time()
     net_time = t1 - t0
-    print(f"\n\t{echellogram.device}: {net_time:0.5f} seconds", end = '\t')
+    print(f"\n\t{echellogram.device}: {net_time:0.5f} seconds", end="\t")
     assert amplitudes.shape == (1, 1, echellogram.n_amps)
     assert dense_λ.shape == (1, 1, echellogram.n_amps)
     assert dense_λ.dtype == echellogram.xx.dtype
@@ -84,7 +85,10 @@ def test_scene_model(device):
     assert scene_model.dtype == echellogram.xx.dtype
 
 
-@pytest.mark.parametrize("attribute", ["\u03bb\u03bb\u03bb", "junk", "λ"])
-def test_invalid_module_attributes(attribute):
+def test_trace_profile():
+    """Does the trace profile have the right shape?"""
     echellogram = Echellogram()
-    assert not hasattr(echellogram, attribute)
+    profile_coeffs = torch.tensor([3.2, -1.5]).double()
+    profile = echellogram.source_profile_simple(profile_coeffs)
+    assert profile.shape == echellogram.xx.shape
+    assert profile.dtype == echellogram.xx.dtype
