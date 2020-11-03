@@ -72,10 +72,10 @@ class Echellogram(nn.Module):
             self.amps.clone().detach().requires_grad_(True).double().to(device)
         )
 
-        self._ss = None
-        self._emask = None
-        self._λλ = None
-        self.λλ = None
+
+        self.ss = self.s_of_xy(self.s_coeffs)
+        self.λλ = self.lam_xy(self.lam_coeffs)
+        self.emask = self.edge_mask(self.smoothness)
 
     def forward(self, x):
 
@@ -144,3 +144,7 @@ class Echellogram(nn.Module):
 
         output = const + (term0 + xterm1 + xterm2) + yterm1
         return output
+
+    def single_arcline(self, amp, lam_0, lam_sigma, lam_map):
+        '''Evaluate a normalized arcline given a 2D wavelength map'''
+        return amp/(lam_sigma*torch.sqrt(2*math.pi))*torch.exp(-0.5*((lam_map-lam_0)/lam_sigma)**2)
