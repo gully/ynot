@@ -89,9 +89,9 @@ class Echellogram(nn.Module):
             dtype=torch.float64,
         )
 
-    def forward(self, x):
+    def forward(self, index):
 
-        return 1
+        return self.generative_model(index)
 
     def s_of_xy(self, params):
         """
