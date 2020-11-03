@@ -4,6 +4,8 @@ The ``echelle`` module provides the core functionality of ynot via :class:`ynot.
 
 import torch
 from torch import nn
+import math
+from torch.distributions import Normal
 
 
 class Echellogram(nn.Module):
@@ -93,19 +95,16 @@ class Echellogram(nn.Module):
         s_out = kk * ((self.yy - y0) - dy0_dx * self.xx)
         return s_out
 
-    def edge_mask(self, smoothness):
+    def edge_mask(self, log_smoothness):
         """Apply the product of two sigmoid functions to make a smooth tophat
 
         Currently hard-coded with a 12 arcsecond slit.
         """
         arg1 = self.ss - 0.0
         arg2 = 12.0 - self.ss
-        return (
-            1.0
-            / (1.0 + torch.exp(-arg1 / torch.exp(smoothness)))
-            * 1.0
-            / (1.0 + torch.exp(-arg2 / torch.exp(smoothness)))
-        )
+        bottom_edge = torch.sigmoid(-arg1 / torch.exp(log_smoothness))
+        top_edge = torch.sigmoid(-arg2 / torch.exp(log_smoothness))
+        return bottom_edge * top_edge
 
     def lam_xy(self, c):
         r"""A 2D Surface mapping :math:`(x,y)` pixels to :math:`\lambda`
@@ -144,10 +143,12 @@ class Echellogram(nn.Module):
         output = const + (term0 + xterm1 + xterm2) + yterm1
         return output
 
-    def single_arcline(self, amp, lam_0, lam_sigma, lam_map):
+    def single_arcline(self, amp, lam_0, lam_sigma):
         """Evaluate a normalized arcline given a 2D wavelength map"""
-        return (
-            amp
-            / (lam_sigma * torch.sqrt(2 * math.pi))
-            * torch.exp(-0.5 * ((lam_map - lam_0) / lam_sigma) ** 2)
-        )
+        ln_prob = Normal(loc=lam_0, scale=lam_sigma).log_prob(self.λλ)
+        return amp * torch.exp(ln_prob)
+
+    def native_pixel_model(self, amp_of_lambda, lam_vec):
+        """A Native-pixel model of the scene"""
+        log_scene_cube = Normal(loc=lam_vec, scale=0.42).log_prob(self.λλ.unsqueeze(2))
+        return (amp_of_lambda * torch.exp(log_scene_cube)).sum(axis=2)
