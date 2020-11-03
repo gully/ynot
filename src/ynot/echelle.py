@@ -42,7 +42,7 @@ class Echellogram(nn.Module):
                 device=device,
             )
         )
-        self.n_amps = 2000
+        self.n_amps = 1800
         self.amps = nn.Parameter(
             torch.ones(
                 self.n_amps, requires_grad=True, dtype=torch.float64, device=device
@@ -74,9 +74,20 @@ class Echellogram(nn.Module):
             self.amps.clone().detach().requires_grad_(True).double().to(device)
         )
 
+        # Set the s(x,y), and λ(x,y) coordinates
         self.ss = self.s_of_xy(self.s_coeffs)
         self.λλ = self.lam_xy(self.lam_coeffs)
         self.emask = self.edge_mask(self.smoothness)
+
+        # The wavelength vector should not require grad.
+        self.λ_vector = torch.linspace(
+            self.λλ.min().item(),
+            self.λλ.max().item(),
+            self.n_amps,
+            device=self.device,
+            requires_grad=False,
+            dtype=torch.float64,
+        )
 
     def forward(self, x):
 
@@ -150,8 +161,12 @@ class Echellogram(nn.Module):
 
     def native_pixel_model(self, amp_of_lambda, lam_vec):
         """A Native-pixel model of the scene"""
-        log_scene_cube = Normal(loc=lam_vec, scale=0.42).log_prob(self.λλ.unsqueeze(2))
-        return (amp_of_lambda * torch.exp(log_scene_cube)).sum(axis=2)
+        log_scene_cube = Normal(
+            loc=lam_vec.unsqueeze(0).unsqueeze(0), scale=0.42
+        ).log_prob(self.λλ.unsqueeze(2))
+        return (
+            amp_of_lambda.unsqueeze(0).unsqueeze(0) * torch.exp(log_scene_cube)
+        ).sum(axis=2)
 
     def source_profile_simple(self, p_coeffs):
         """The profile of the sky source, given position and width coefficients and s
@@ -162,3 +177,15 @@ class Echellogram(nn.Module):
         sigma = torch.exp(p_coeffs[1])
         ln_prob = Normal(loc=p_coeffs[0], scale=sigma).log_prob(self.ss)
         return torch.exp(ln_prob)
+
+    def generative_model(self, index):
+        """The generative model resembles echelle spectra traces in astronomy data"""
+        self.ss = self.s_of_xy(self.s_coeffs)
+        self.λλ = self.lam_xy(self.lam_coeffs)
+        self.emask = self.edge_mask(self.smoothness)
+        sky_model = self.native_pixel_model(self.amps, self.λ_vector)
+        src_model = self.native_pixel_model(self.src_amps, self.λ_vector)
+        src_prof = self.source_profile_simple(self.p_coeffs[index])
+        net_sky = self.emask * sky_model
+        net_src = src_prof * src_model
+        return net_sky + net_src

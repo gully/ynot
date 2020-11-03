@@ -61,26 +61,29 @@ def test_scene_model(device):
     assert scene_model.shape == echellogram.xx.shape
     assert scene_model.dtype == echellogram.xx.dtype
 
-    amplitudes = echellogram.amps.unsqueeze(0).unsqueeze(0)
-    dense_λ = (
-        torch.linspace(
-            echellogram.λλ.min().item(),
-            echellogram.λλ.max().item(),
-            echellogram.n_amps,
-            device=echellogram.device,
-            dtype=torch.float64,
-        )
-        .unsqueeze(0)
-        .unsqueeze(0)
-    )
     t0 = time.time()
-    scene_model = echellogram.native_pixel_model(amplitudes, dense_λ)
+    scene_model = echellogram.native_pixel_model(echellogram.amps, echellogram.λ_vector)
     t1 = time.time()
     net_time = t1 - t0
     print(f"\n\t{echellogram.device}: {net_time:0.5f} seconds", end="\t")
-    assert amplitudes.shape == (1, 1, echellogram.n_amps)
-    assert dense_λ.shape == (1, 1, echellogram.n_amps)
-    assert dense_λ.dtype == echellogram.xx.dtype
+    assert echellogram.amps.shape == (echellogram.n_amps,)
+    assert echellogram.λ_vector.shape == (echellogram.n_amps,)
+    assert echellogram.λ_vector.dtype == echellogram.xx.dtype
+    assert scene_model.shape == echellogram.xx.shape
+    assert scene_model.dtype == echellogram.xx.dtype
+
+
+@pytest.mark.parametrize(
+    "device", ["cuda", "cpu"],
+)
+def test_generative_model(device):
+    """Do the scene models have the right shape"""
+    echellogram = Echellogram(device=device)
+    t0 = time.time()
+    scene_model = echellogram.generative_model(0)
+    t1 = time.time()
+    net_time = t1 - t0
+    print(f"\n\t{echellogram.device}: {net_time:0.5f} seconds", end="\t")
     assert scene_model.shape == echellogram.xx.shape
     assert scene_model.dtype == echellogram.xx.dtype
 
