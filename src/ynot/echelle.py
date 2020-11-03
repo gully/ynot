@@ -21,6 +21,7 @@ class Echellogram(nn.Module):
         self.y0 = ybounds[0]
         self.ymax = ybounds[1]
         self.ny = self.ymax = self.y0
+        self.fiducial = torch.tensor([21779.0, 0.310])
 
         self.nx = 1024
         self.xvec = torch.arange(0, self.nx, 1.0)
@@ -73,20 +74,12 @@ class Echellogram(nn.Module):
 
         self._ss = None
         self._emask = None
+        self._λλ = None
         self.λλ = None
 
     def forward(self, x):
-        # Computes the outputs / predictions
-        variable_part = torch.matmul(x, self.a)
-        bias_term = self.b * torch.ones(
-            (x.shape[0], 1024, 1024), dtype=torch.float64, device="cuda"
-        )
 
-        dark_term = variable_part.unsqueeze(1).unsqueeze(1) * torch.ones(
-            (x.shape[0], 1024, 1024), dtype=torch.float64, device="cuda"
-        )
-
-        return bias_term + dark_term
+        return 1
 
     def s_of_xy(self, params):
         """
@@ -101,16 +94,12 @@ class Echellogram(nn.Module):
         s_out = kk * ((self.yy - y0) - dy0_dx * self.xx)
         return s_out
 
-    @property
-    def ss(self):
-        return self._ss
-
-    @ss.setter
-    def ss(self, params):
-        self._ss = self.s_of_xy(params)
 
     def edge_mask(self, smoothness):
-        """Apply the product of two sigmoid functions to make a smooth tophat"""
+        """Apply the product of two sigmoid functions to make a smooth tophat
+
+        Currently hard-coded with a 12 arcsecond slit.
+        """
         arg1 = self.ss - 0.0
         arg2 = 12.0 - s_in
         return (
@@ -120,6 +109,49 @@ class Echellogram(nn.Module):
             / (1.0 + torch.exp(-arg2 / torch.exp(smoothness)))
         )
 
+    def lam_xy(self, c):
+        """A 2D Surface mapping :math:`(x,y)` pixels to :math:`\lambda`
+
+        Each (x,y) pixel coordinate maps to a single central wavelength. This
+        function performs that transformation, given the coefficents of polynomials,
+        the `x` and `y` values, and a fiducial central wavelength and dispersion.
+        The coefficients in this function are intended to be fit through iterative
+        stochastic gradient descent.
+
+        Args:
+            arg1 (int): Description of arg1
+            arg2 (str): Description of arg2
+
+        Returns:
+            bool: Description of return value
+
+        """
+        x = (self.xx-self.nx/2)/(self.nx/2)
+        y = (self.yy-self.ny/2)/(self.ny/2)
+        const = self.fiducial[0]
+        c0 = c[0] # Shift: Angstroms ~[-3, 3]
+        cx1 = self.fiducial[1]*(1+c[1]*0.01)*self.nx/2 # Dispersion adjustment: Dimensionless ~[-1, 1]
+        cx2 = 1.0+c[2] # Pixel-dependent dispersion: Angstroms [-1.5, 1.5]
+        #cx3 = c[4] # Higher-order dispersion [-1,1]
+        cy1 = c[3] # Vertically-Tilted straight arclines [Angstroms/pixel] [ -0.3, 0.3]
+
+        term0 = c0
+        xterm1 = cx1 * x
+        xterm2 = cx2 * (2*x**2 - 1)
+        #xterm3 = cx3 * (4*x**3 - 3*x)
+        yterm1 = cy1 * y
+
+        output = const + (term0 + xterm1 + xterm2 ) + yterm1
+        return output
+
+    @property
+    def ss(self):
+        return self._ss
+
+    @ss.setter
+    def ss(self, params):
+        self._ss = self.s_of_xy(params)
+
     @property
     def emask(self):
         return self._emask
@@ -127,3 +159,11 @@ class Echellogram(nn.Module):
     @emask.setter
     def emask(self, param):
         self._emask = self.edge_mask(param)
+
+    @property
+    def λλ(self):
+        return self._λλ
+
+    @λλ.setter
+    def λλ(self, params):
+        self._λλ = self.lam_xy(params)
