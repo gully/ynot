@@ -13,6 +13,7 @@ def test_cuda():
     vec1 = torch.arange(10).unsqueeze(0).cuda()
     assert vec1.sum() == 45
 
+
 @pytest.mark.parametrize(
     "attribute",
     ["xx", "yy", "ss", "emask", "λλ", "device", "y0", "ymax", "\u03bb\u03bb"],
