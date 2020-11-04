@@ -13,9 +13,7 @@
 import os
 import sys
 
-sys.path.insert(0, os.path.abspath(".."))
-sys.path.append(os.path.join(os.path.dirname(__name__), '..'))
-
+sys.path.insert(0, os.path.abspath("../src/"))
 
 # -- Project information -----------------------------------------------------
 
@@ -33,15 +31,21 @@ release = "0.1"
 # extensions coming with Sphinx (named 'sphinx.ext.*') or your custom
 # ones.
 extensions = [
+    "recommonmark",
     "sphinx.ext.autodoc",
     "sphinx.ext.coverage",
     "sphinx.ext.napoleon",
     "sphinx.ext.todo",
+    "sphinx.ext.mathjax",
     "sphinx.ext.githubpages",
+    "sphinx.ext.ifconfig",
 ]
 
 # Add any paths that contain templates here, relative to this directory.
 templates_path = ["_templates"]
+mathjax_path = "Mathjax/tex-mml-chtml.js"
+#"https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"
+
 
 # List of patterns, relative to source directory, that match files and
 # directories to ignore when looking for source files.

@@ -12,6 +12,8 @@ The `ynot` project aims to improve the astronomical echelle spectroscopy data re
 2. Employing an interpretable model in which all parameters are varied at the same time
 3. Encouraging extensibility and modularity for a wide range of scientific applications
 
+The documentation uses Mathjax for displaying math.  This may not render on certain browsers, or if Javascript is disabled.  Here is an inline demo: :math:`ax^2+bx` and another: :math:`$ax^2+bx$` and a third: :math:`\(ax^2+bx\)` and a fourth: :math:`\\(ax^2+bx\\)`
+
 We invite you to engage with us at our `GitHub page
 <http://www.github.com/gully/ynot>`_, with pull requests and discussions welcomed.
 

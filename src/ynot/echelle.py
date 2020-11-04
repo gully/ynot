@@ -108,6 +108,9 @@ class Echellogram(nn.Module):
 
     def edge_mask(self, log_smoothness):
         """Apply the product of two sigmoid functions to make a smooth tophat
+        Demo 1 --- :math: a x^2 + bx + c
+        Demo 2 --- .. math:: a x^2 + bx + c
+        Demo 3 --- :math:`a x^2 + bx + c`
 
         Currently hard-coded with a 12 arcsecond slit.
         """
@@ -118,7 +121,13 @@ class Echellogram(nn.Module):
         return bottom_edge * top_edge
 
     def lam_xy(self, c):
-        r"""A 2D Surface mapping :math:`(x,y)` pixels to :math:`\lambda`
+        r"""A 2D Surface mapping :math: (x,y) pixels to :math:`\lambda`
+
+        Test of mathjax:
+
+        Demo 1 --- :math: a x^2 + bx + c
+        Demo 2 --- .. math:: a x^2 + bx + c
+        Demo 3 --- :math:`a x^2 + bx + c`
 
         Each (x,y) pixel coordinate maps to a single central wavelength. This
         function performs that transformation, given the coefficents of polynomials,
