@@ -6,3 +6,5 @@ The API is under active development and should be considered unstable.  Feedback
 
 .. automodule:: ynot.echelle
     :members:
+    :undoc-members:
+    :show-inheritance:
