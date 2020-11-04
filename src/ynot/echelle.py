@@ -188,4 +188,4 @@ class Echellogram(nn.Module):
         src_prof = self.source_profile_simple(self.p_coeffs[index])
         net_sky = self.emask * sky_model
         net_src = src_prof * src_model
-        return net_sky + net_src
+        return net_sky + net_src + self.bkg_const

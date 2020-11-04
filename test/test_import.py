@@ -13,22 +13,6 @@ def test_cuda():
     vec1 = torch.arange(10).unsqueeze(0).cuda()
     assert vec1.sum() == 45
 
-
-@pytest.mark.slow
-@pytest.mark.parametrize("device", ["cuda", "cpu"])
-def test_big_matrices_cuda(device):
-    """Can you do invert a large matrix (13,000 x 13,000)"""
-    dim = 13_000
-    t0 = time.time()
-    matrix = torch.randn(size=(dim, dim)).to(device)
-    product = matrix.mm(matrix.T)
-    inverse = torch.inverse(product)
-    t1 = time.time()
-    net_time = t1 - t0
-    print(f"{device}: {net_time:0.1f} seconds")
-    assert net_time < 60.0
-
-
 @pytest.mark.parametrize(
     "attribute",
     ["xx", "yy", "ss", "emask", "λλ", "device", "y0", "ymax", "\u03bb\u03bb"],
@@ -81,6 +65,21 @@ def test_generative_model(device):
     echellogram = Echellogram(device=device)
     t0 = time.time()
     scene_model = echellogram.generative_model(0)
+    t1 = time.time()
+    net_time = t1 - t0
+    print(f"\n\t{echellogram.device}: {net_time:0.5f} seconds", end="\t")
+    assert scene_model.shape == echellogram.xx.shape
+    assert scene_model.dtype == echellogram.xx.dtype
+
+
+@pytest.mark.parametrize(
+    "device", ["cuda", "cpu"],
+)
+def test_forward(device):
+    """Do the scene models have the right shape"""
+    echellogram = Echellogram(device=device)
+    t0 = time.time()
+    scene_model = echellogram.forward(1)
     t1 = time.time()
     net_time = t1 - t0
     print(f"\n\t{echellogram.device}: {net_time:0.5f} seconds", end="\t")
