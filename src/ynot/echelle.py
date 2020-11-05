@@ -108,9 +108,7 @@ class Echellogram(nn.Module):
 
     def edge_mask(self, log_smoothness):
         """Apply the product of two sigmoid functions to make a smooth tophat
-        Demo 1 --- :math: a x^2 + bx + c
-        Demo 2 --- .. math:: a x^2 + bx + c
-        Demo 3 --- :math:`a x^2 + bx + c`
+        Demo 3 --- :math:`a x^2 + b \cdot x + c`
 
         Currently hard-coded with a 12 arcsecond slit.
         """
