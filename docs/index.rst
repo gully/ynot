@@ -3,8 +3,8 @@
    You can adapt this file completely to your liking, but it should at least
    contain the root `toctree` directive.
 
-Welcome to the `ynot` documentation!
-====================================
+:math:`y_0`
+===========
 
 The `ynot` project aims to improve the astronomical echelle spectroscopy data reduction process through three key ideas:
 
@@ -16,10 +16,10 @@ We invite you to engage with us at our `GitHub page
 <http://www.github.com/gully/ynot>`_, with pull requests and discussions welcomed.
 
 .. toctree::
-   :maxdepth: 2
+   :maxdepth: 1
    :caption: Contents:
 
-    Installation <about/install>
+    Installation <install>
     Application Programming Interface <api>
 
 Currently this project requires NVIDIA GPUs.  To check if you have a GPU available:

@@ -1,5 +1,15 @@
 """
-The ``echelle`` module provides the core functionality of ynot via :class:`ynot.echelle.Echellogram`.
+Spectral dispersion and slit length axes are generally not perfectly aligned with the rectilinear pixel grid of a spectrograph detector, complicating the extraction of echelle spectroscopy.  There exists some mapping of each 2D :math:`(x,y)` pixel to a new coordinate system of wavelength and slit position :math:`(\lambda,s)`, with :math:`x` and :math:`y` in units of pixels, :math:`\lambda` in units of Ångstroms, and :math:`s` in units of arcseconds.  These surfaces can therefore be represented as scalar functions over :math:`x` and :math:`y`.  The `ynot` project infers this mapping for all pixels in an echelle order.  Let's consider the case of separable polynomials:
+
+.. math::
+
+   \lambda(x,y) &= \lambda_0 + c_1 x + c_2 x^2 + c_3 y
+
+   s(x,y)      &= s_0 + b_1 y + b_2 x
+
+
+Echellogram
+############
 """
 
 import torch
@@ -13,7 +23,9 @@ class Echellogram(nn.Module):
     A PyTorch layer that provides a parameter set and transformations to model echellograms.
 
     Args:
-        ybounds (tuple): the y_0 and y_max of the raw echellogram to analyze. Default: (425, 510)
+        device (str): Either "cuda" for GPU acceleration, or "cpu" otherwise
+        ybounds (tuple): the :math:`y_0` and :math:`y_{max}` of the raw echellogram to analyze.
+            Default: (425, 510)
     """
 
     def __init__(self, device="cuda", ybounds=(425, 510)):
@@ -90,27 +102,43 @@ class Echellogram(nn.Module):
         )
 
     def forward(self, index):
+        """The forward pass of the neural network model
 
+        Args:
+            index (int): the index of the ABB'A' nod frames: *e.g.* A=0, B=1, B'=2, A'=3
+        Returns:
+            (torch.tensor): the 2D generative scene model destined for backpropagation parameter tuning
+        """
         return self.generative_model(index)
 
     def s_of_xy(self, params):
         """
-        Return the along-slit coordinate :math:`s` as a function of :math:`(x,y)`
+        The along-slit coordinate :math:`s` as a function of :math:`(x,y)`, given coefficients
 
         Args:
-            params (torch.tensor or tuple): the coefficents relating s to (x,y).
+            params (torch.tensor or tuple): the polynomial weights, first order in :math:`x` and :math:`y`
         Returns:
-            (torch.tensor): the 2D map of :math:`s(x,y)`
+            (torch.tensor): the 2D surface map :math:`s(x,y)`
         """
         y0, kk, dy0_dx = params
         s_out = kk * ((self.yy - y0) - dy0_dx * self.xx)
         return s_out
 
     def edge_mask(self, log_smoothness):
-        """Apply the product of two sigmoid functions to make a smooth tophat
-        Demo 3 --- :math:`a x^2 + b \cdot x + c`
+        r"""The soft-edge pixel mask defined by the extent of the spectrograph slit length
 
-        Currently hard-coded with a 12 arcsecond slit.
+        Constructed by the product of two sigmoid functions to make a smooth tophat:
+
+        .. math::
+
+           m_e = \mathscr{S}(0) \cdot (1 - \mathscr{S}(12) )
+
+        Currently hard-coded to a 12 arcsecond slit.
+
+        Args:
+            log_smoothness (torch.tensor or tuple): the :math:`\beta` smoothness parameter related to image quality
+        Returns:
+            (torch.tensor): the 2D surface map :math:`m_e(x,y)`
         """
         arg1 = self.ss - 0.0
         arg2 = 12.0 - self.ss
@@ -119,13 +147,8 @@ class Echellogram(nn.Module):
         return bottom_edge * top_edge
 
     def lam_xy(self, c):
-        r"""A 2D Surface mapping :math: (x,y) pixels to :math:`\lambda`
+        r"""A 2D Surface mapping :math:`(x,y)` pixels to :math:`\lambda`
 
-        Test of mathjax:
-
-        Demo 1 --- :math: a x^2 + bx + c
-        Demo 2 --- .. math:: a x^2 + bx + c
-        Demo 3 --- :math:`a x^2 + bx + c`
 
         Each (x,y) pixel coordinate maps to a single central wavelength. This
         function performs that transformation, given the coefficents of polynomials,
@@ -134,11 +157,10 @@ class Echellogram(nn.Module):
         stochastic gradient descent.
 
         Args:
-            arg1 (int): Description of arg1
-            arg2 (str): Description of arg2
+            c (torch.tensor): polynomial weights and bias fitted through backpropagation
 
         Returns:
-            bool: Description of return value
+            (torch.tensor): the 2D surface map :math:`\lambda(x,y)`
 
         """
         x = (self.xx - self.nx / 2) / (self.nx / 2)
@@ -161,7 +183,7 @@ class Echellogram(nn.Module):
         output = const + (term0 + xterm1 + xterm2) + yterm1
         return output
 
-    def single_arcline(self, amp, lam_0, lam_sigma):
+    def _single_arcline(self, amp, lam_0, lam_sigma):
         """Evaluate a normalized arcline given a 2D wavelength map"""
         ln_prob = Normal(loc=lam_0, scale=lam_sigma).log_prob(self.λλ)
         return amp * torch.exp(ln_prob)
