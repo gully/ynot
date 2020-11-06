@@ -6,13 +6,23 @@ from ynot.echelle import Echellogram
 
 def test_cuda():
     """Do you have NVIDIA GPUs (CUDA) available?"""
-    # Test that cuda is available
 
     assert torch.cuda.is_available()
 
     vec1 = torch.arange(10).unsqueeze(0).cuda()
     assert vec1.sum() == 45
 
+
+def test_echelle_device():
+    """Can we cast the model to GPU?"""
+
+    device = 'cuda'
+    echellogram = Echellogram(device='cuda')
+    echellogram = echellogram.to(device) #no-op
+
+    assert echellogram.xx.device.type == device
+    output = echellogram.forward(1)
+    assert echellogram.xx.device.type == device
 
 @pytest.mark.parametrize(
     "attribute",
@@ -87,11 +97,25 @@ def test_forward(device):
     assert scene_model.shape == echellogram.xx.shape
     assert scene_model.dtype == echellogram.xx.dtype
 
+@pytest.mark.parametrize(
+    "device", ["cuda", "cpu"],
+)
+def test_parameters(device):
+    """Do the scene models have the right shape"""
+    echellogram = Echellogram(device=device)
+    for parameter in echellogram.parameters():
+        assert parameter.isfinite().all()
 
 def test_trace_profile():
     """Does the trace profile have the right shape?"""
     echellogram = Echellogram()
     profile_coeffs = torch.tensor([3.2, -1.5]).double()
     profile = echellogram.source_profile_simple(profile_coeffs)
+    assert profile.shape == echellogram.xx.shape
+    assert profile.dtype == echellogram.xx.dtype
+
+    assert echellogram.p_coeffs.shape == (2,2)
+    assert echellogram.p_coeffs[0].shape == (2,)
+    profile = echellogram.source_profile_simple(echellogram.p_coeffs[0].squeeze())
     assert profile.shape == echellogram.xx.shape
     assert profile.dtype == echellogram.xx.dtype

@@ -1,3 +1,14 @@
+"""
+datasets
+--------
+
+This utility loads data, inheriting from the PyTorch Dataset model.
+This approach allows very large datasets---possibly larger than RAM---to inform models.
+
+FPADataset
+############
+"""
+
 import torch
 from torch.utils.data import Dataset
 from astropy.io import fits
@@ -6,7 +17,7 @@ import kornia
 
 # custom dataset loader
 class FPADataset(Dataset):
-    """Read in two AB nods
+    """Read in two AB nods of an Echellogram (experimental)
 
     Args:
         ybounds (tupe of ints): the :math:`(y_0, y_{max})` bounds for isolated echelle trace
@@ -31,19 +42,19 @@ class FPADataset(Dataset):
 
         data_full = torch.stack([nodA, nodB])
 
-        data = data_full[:, ybounds[0]:ybounds[1], :]
-        data = data.permute(0,2,1)
-
-        self.pixels = data
-        self.ind = torch.tensor([0,1])
-
         # Inpaint bad pixels.  In the future we will simply neglect these pixels
         smoothed_data = kornia.filters.median_blur(data_full.unsqueeze(1), (5,5)).squeeze()
         data_full[:, bpm] = smoothed_data[:, bpm]
 
+        data = data_full[:, ybounds[0]:ybounds[1], :]
+        data = data.permute(0,2,1)
+
+        self.pixels = data
+        self.index = torch.tensor([0,1])
+
 
     def __getitem__(self, index):
-        return (elf.ind[index], self.pixels[index])
+        return (self.index[index], self.pixels[index])
 
     def __len__(self):
         return len(self.pixels[:,0,0])

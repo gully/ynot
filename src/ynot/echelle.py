@@ -1,11 +1,15 @@
 """
-Spectral dispersion and slit length axes are generally not perfectly aligned with the rectilinear pixel grid of a spectrograph detector, complicating the extraction of echelle spectroscopy.  There exists some mapping of each 2D :math:`(x,y)` pixel to a new coordinate system of wavelength and slit position :math:`(\lambda,s)`, with :math:`x` and :math:`y` in units of pixels, :math:`\lambda` in units of Ångstroms, and :math:`s` in units of arcseconds.  These surfaces can therefore be represented as scalar functions over :math:`x` and :math:`y`.  The `ynot` project infers this mapping for all pixels in an echelle order.  Let's consider the case of separable polynomials:
+echelle
+-------
+
+Spectral dispersion and slit length axes are generally not perfectly aligned with the rectilinear pixel grid of a spectrograph detector, complicating the extraction of echelle spectroscopy.  There exists some mapping of each 2D :math:`(x,y)` pixel to a new coordinate system of wavelength and slit position :math:`(\lambda,s)`, with :math:`x` and :math:`y` in units of pixels, :math:`\lambda` in units of Ångstroms, and :math:`s` in units of arcseconds.  These surfaces can therefore be represented as scalar functions over :math:`x` and :math:`y`.  The `ynot` project infers this mapping for all pixels in an echelle order.  For example, this mapping could be parameterized as separable polynomials:
 
 .. math::
 
    \lambda(x,y) &= \lambda_0 + c_1 x + c_2 x^2 + c_3 y
 
    s(x,y)      &= s_0 + b_1 y + b_2 x
+
 
 
 Echellogram
@@ -54,7 +58,7 @@ class Echellogram(nn.Module):
                 device=device,
             )
         )
-        self.n_amps = 1800
+        self.n_amps = 1500
         self.amps = nn.Parameter(
             torch.ones(
                 self.n_amps, requires_grad=True, dtype=torch.float64, device=device
@@ -214,7 +218,7 @@ class Echellogram(nn.Module):
         self.emask = self.edge_mask(self.smoothness)
         sky_model = self.native_pixel_model(self.amps, self.λ_vector)
         src_model = self.native_pixel_model(self.src_amps, self.λ_vector)
-        src_prof = self.source_profile_simple(self.p_coeffs[index])
+        src_prof = self.source_profile_simple(self.p_coeffs[index].squeeze())
         net_sky = self.emask * sky_model
         net_src = src_prof * src_model
         return net_sky + net_src + self.bkg_const
