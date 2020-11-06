@@ -183,7 +183,7 @@ class Echellogram(nn.Module):
         output = const + (term0 + xterm1 + xterm2) + yterm1
         return output
 
-    def _single_arcline(self, amp, lam_0, lam_sigma):
+    def single_arcline(self, amp, lam_0, lam_sigma):
         """Evaluate a normalized arcline given a 2D wavelength map"""
         ln_prob = Normal(loc=lam_0, scale=lam_sigma).log_prob(self.λλ)
         return amp * torch.exp(ln_prob)
