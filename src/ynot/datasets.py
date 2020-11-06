@@ -6,16 +6,14 @@ import kornia
 
 # custom dataset loader
 class FPADataset(Dataset):
-    """
-    Focal Plane Array dataset
+    """Read in two AB nods
 
     Args:
+        ybounds (tupe of ints): the :math:`(y_0, y_{max})` bounds for isolated echelle trace
 
-    Only darks are supported right now!
     """
 
     def __init__(self, ybounds=(425, 510)):
-        """Read in two AB nods"""
         super().__init__()
 
         nodA_path = '../../zoja/nsdrp/raw/2012-11-27/NS.20121127.49332.fits'
