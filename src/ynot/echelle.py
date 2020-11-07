@@ -146,8 +146,8 @@ class Echellogram(nn.Module):
         """
         arg1 = self.ss - 0.0
         arg2 = 12.0 - self.ss
-        bottom_edge = torch.sigmoid(-arg1 / torch.exp(log_smoothness))
-        top_edge = torch.sigmoid(-arg2 / torch.exp(log_smoothness))
+        bottom_edge = torch.sigmoid(arg1 / torch.exp(log_smoothness))
+        top_edge = torch.sigmoid(arg2 / torch.exp(log_smoothness))
         return bottom_edge * top_edge
 
     def lam_xy(self, c):
