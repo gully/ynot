@@ -60,7 +60,7 @@ class Echellogram(nn.Module):
         )
         self.n_amps = 1500
         self.amps = nn.Parameter(
-            torch.ones(
+            30.0*torch.ones(
                 self.n_amps, requires_grad=True, dtype=torch.float64, device=device
             )
         )
@@ -87,7 +87,9 @@ class Echellogram(nn.Module):
             )
         )
         self.src_amps = nn.Parameter(
-            self.amps.clone().detach().requires_grad_(True).double().to(device)
+            10.0*torch.ones(
+                self.n_amps, requires_grad=True, dtype=torch.float64, device=device
+            )
         )
 
         # Set the s(x,y), and λ(x,y) coordinates
