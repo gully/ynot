@@ -81,7 +81,7 @@ class Echellogram(nn.Module):
         self.p_coeffs = nn.Parameter(
             torch.tensor(
                 [[3.0, -1.0], [9.0, -1.0]],
-                requires_grad=True,
+                requires_grad=False, # Fix for now!
                 dtype=torch.float64,
                 device=device,
             )
