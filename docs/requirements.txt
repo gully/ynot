@@ -1,4 +1,5 @@
 sphinx>=3.2.1
 numpy
-sphinx-nervproject-theme
 torch
+astropy
+kornia

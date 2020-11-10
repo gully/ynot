@@ -6,3 +6,6 @@ The API is under active development and should be considered unstable.  Feedback
 
 .. automodule:: ynot.datasets
     :members:
+
+.. automodule:: ynot.echelle
+    :members:

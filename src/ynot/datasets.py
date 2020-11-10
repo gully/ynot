@@ -17,10 +17,10 @@ import kornia
 
 # custom dataset loader
 class FPADataset(Dataset):
-    """Read in two AB nods of an Echellogram (experimental)
+    r"""Read in two AB nods of an Echellogram (experimental)
 
     Args:
-        ybounds (tupe of ints): the :math:`(y_0, y_{max})` bounds for isolated echelle trace
+        ybounds (tuple of ints): the :math:`(y_0, y_{max})` bounds for isolated echelle trace
 
     """
 
