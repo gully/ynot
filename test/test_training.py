@@ -7,8 +7,31 @@ from torch.utils.data import DataLoader
 import torch.optim as optim
 import torch.nn as nn
 
+
 @pytest.mark.parametrize(
-    "device", ["cuda"]
+    "device", ["cuda", "cpu"],
+)
+def test_forward_backward(device):
+    """Do the scene models have the right shape"""
+    echellogram = Echellogram(device=device)
+    t0 = time.time()
+    scene_model = echellogram.forward(1)
+    t1 = time.time()
+    scalar = scene_model.sum()
+    t2 = time.time()
+    scalar.backward()
+    t3 = time.time()
+    net_time = t1 - t0
+    net_time2 = t3 - t2
+    print(f"\n\t{echellogram.device}: forward {net_time:0.5f} seconds", end="\t")
+    print(f"\n\t{echellogram.device}: backward {net_time2:0.5f} seconds", end="\t")
+    assert scene_model.shape == echellogram.xx.shape
+    assert scene_model.dtype == echellogram.xx.dtype
+
+
+
+@pytest.mark.parametrize(
+    "device", ["cuda", "cpu"]
 )
 @pytest.mark.slow
 def test_training_loop(device):
