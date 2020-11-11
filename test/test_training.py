@@ -41,7 +41,8 @@ def test_training_loop(device):
     dataset = FPADataset()
 
     n_frames_per_batch=1
-    train_loader = DataLoader(dataset=dataset, batch_size=n_frames_per_batch, shuffle=True)
+    train_loader = DataLoader(dataset=dataset, batch_size=n_frames_per_batch, pin_memory=True,
+    shuffle=True)
 
     loss_fn = nn.MSELoss(reduction='mean')
     optimizer = optim.Adam(model.parameters(), 0.01)
@@ -54,7 +55,7 @@ def test_training_loop(device):
     t0 = time.time()
     for epoch in range(n_epochs):
         for data in train_loader:
-            ind, y_batch = data[0].to(device), data[1].to(device)
+            ind, y_batch = data[0].to(device, non_blocking=True), data[1].to(device, non_blocking=True)
             model.train()
             yhat = model.forward(ind).unsqueeze(0)
             loss = loss_fn(yhat, y_batch)
