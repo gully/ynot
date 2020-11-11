@@ -17,9 +17,10 @@ dataset = FPADataset()
 
 # Initialize from a previous training run
 state_dict = torch.load('model_coeffs.pt')
-for key in model.state_dict():
-    model.state_dict()[key] *=0
-    model.state_dict()[key] += state_dict[key]
+#for key in model.state_dict():
+#    model.state_dict()[key] *=0
+#    model.state_dict()[key] += state_dict[key].to(device)
+model.load_state_dict(state_dict)
 
 # Only send one frame per batch
 n_frames_per_batch=1
@@ -29,7 +30,7 @@ loss_fn = nn.MSELoss(reduction='mean')
 optimizer = optim.Adam(model.parameters(), 0.02)
 
 # It currently takes 0.5 seconds per training epoch, for about 7200 epochs per hour
-n_epochs = 1800
+n_epochs = 10
 
 losses = []
 
