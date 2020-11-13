@@ -27,5 +27,5 @@ dependencies:
   - pip:
     - kornia
     - pykeops
-    - sphinx-nervproject-theme
     - recommonmark
+    - tensorboard
