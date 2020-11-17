@@ -18,13 +18,7 @@ import ccdproc
 import astropy.units as u
 from astropy.nddata import CCDData
 from sklearn.cluster import KMeans
-import warnings
-import logging
 
-# Turn off warnings
-warnings.filterwarnings("ignore")
-logger = logging.getLogger("ccdproc")
-logger.setLevel(logging.ERROR)
 
 # custom dataset loader
 class FPADataset(Dataset):
@@ -32,10 +26,12 @@ class FPADataset(Dataset):
 
     Args:
         ybounds (tuple of ints): the :math:`(y_0, y_{max})` bounds for isolated echelle trace
+        root_dir (str): path to the directory containing 2D echellograms as fits files
+        inpaint_bad_pixels (bool): flag for whether or not to inpaint bad pixels
 
     """
 
-    def __init__(self, ybounds=(425, 510), root_dir=None):
+    def __init__(self, ybounds=(425, 510), root_dir=None, inpaint_bad_pixels=False):
         super().__init__()
 
         if root_dir is None:
@@ -58,7 +54,8 @@ class FPADataset(Dataset):
         data_full = torch.stack([nodA, nodB])  # Creats NxHxW tensor
 
         # Inpaint bad pixels.  In the future we will simply neglect these pixels
-        data_full = self.inpaint_bad_pixels(data_full)
+        if inpaint_bad_pixels:
+            data_full = self.inpaint_bad_pixels(data_full)
         data = data_full[:, ybounds[0] : ybounds[1], :]
         data = data.permute(0, 2, 1)
 
