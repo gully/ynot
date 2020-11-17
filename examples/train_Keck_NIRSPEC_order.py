@@ -10,6 +10,22 @@ from torch.utils.tensorboard import SummaryWriter
 from torchvision.utils import make_grid
 import matplotlib.pyplot as plt
 import numpy as np
+import argparse
+
+parser = argparse.ArgumentParser(
+    description="Experimental astronomical echellogram inference"
+)
+parser.add_argument(
+    "--resume",
+    action="store_true",
+    help="Resume model from last existing saved model",
+)
+parser.add_argument(
+    "--n_epochs", default=1800, help="Number of training epochs"
+)
+
+args = parser.parse_args()
+print(args)
 
 writer = SummaryWriter(log_dir="runs/exp1")
 
@@ -19,10 +35,12 @@ def plot_scene_model(images):
     Generates matplotlib Figure using a trained network, along with images
     and labels from a batch
     """
-    fig, axes = plt.subplots(3, figsize=(8,3))
+    fig, axes = plt.subplots(3, figsize=(8, 3))
     axes[0].imshow(images[0].numpy().T, vmin=0, vmax=300, origin="lower")
     axes[1].imshow(images[1].numpy().T, vmin=0, vmax=300, origin="lower")
-    axes[2].imshow(images[0].numpy().T - images[1].numpy().T, vmin=-100, vmax=100, origin="lower")
+    axes[2].imshow(
+        images[0].numpy().T - images[1].numpy().T, vmin=-100, vmax=100, origin="lower"
+    )
     return fig
 
 
@@ -36,10 +54,11 @@ dataset = FPADataset()
 
 # Initialize from a previous training run
 state_dict = torch.load("model_coeffs.pt")
-# for key in model.state_dict():
-#    model.state_dict()[key] *=0
-#    model.state_dict()[key] += state_dict[key].to(device)
-model.load_state_dict(state_dict)
+if args.resume:
+    # for key in model.state_dict():
+    #    model.state_dict()[key] *=0
+    #    model.state_dict()[key] += state_dict[key].to(device)
+    model.load_state_dict(state_dict)
 
 # Only send one frame per batch
 n_frames_per_batch = 1
@@ -49,7 +68,7 @@ loss_fn = nn.MSELoss(reduction="mean")
 optimizer = optim.Adam(model.parameters(), 0.02)
 
 # It currently takes 0.5 seconds per training epoch, for about 7200 epochs per hour
-n_epochs = 600
+n_epochs = args.n_epochs
 
 losses = []
 
