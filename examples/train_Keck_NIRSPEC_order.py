@@ -11,6 +11,7 @@ from torchvision.utils import make_grid
 import matplotlib.pyplot as plt
 import numpy as np
 import argparse
+import webbrowser
 
 parser = argparse.ArgumentParser(
     description="Experimental astronomical echellogram inference"
@@ -21,13 +22,14 @@ parser.add_argument(
     help="Resume model from last existing saved model",
 )
 parser.add_argument(
-    "--n_epochs", default=1800, help="Number of training epochs"
+    "--n_epochs", default=1800, type=int, help="Number of training epochs"
 )
 
 args = parser.parse_args()
 print(args)
 
 writer = SummaryWriter(log_dir="runs/exp1")
+webbrowser.open('http://localhost:6006/', new=2)
 
 
 def plot_scene_model(images):
