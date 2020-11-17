@@ -14,6 +14,17 @@ from torch.utils.data import Dataset
 from astropy.io import fits
 import numpy as np
 import kornia
+import ccdproc
+import astropy.units as u
+from astropy.nddata import CCDData
+from sklearn.cluster import KMeans
+import warnings
+import logging
+
+# Turn off warnings
+warnings.filterwarnings("ignore")
+logger = logging.getLogger("ccdproc")
+logger.setLevel(logging.ERROR)
 
 # custom dataset loader
 class FPADataset(Dataset):
@@ -24,21 +35,27 @@ class FPADataset(Dataset):
 
     """
 
-    def __init__(self, ybounds=(425, 510)):
+    def __init__(self, ybounds=(425, 510), root_dir=None):
         super().__init__()
 
-        nodA_path = "../../zoja/nsdrp/raw/2012-11-27/NS.20121127.49332.fits"
+        if root_dir is None:
+            root_dir = "/home/gully/GitHub/zoja/nsdrp/raw/2012-11-27/"
+        self.root_dir = root_dir
+        self.nirspec_collection = self.create_nirspec_collection()
+        self.unique_objects = self.get_unique_objects()
+        # self.label_nirspec_nods()
+        nodA_path = self.root_dir + "/NS.20121127.49332.fits"
         nodA_data = fits.open(nodA_path)[0].data.astype(np.float64)
         nodA = torch.tensor(nodA_data)
 
-        nodB_path = "../../zoja/nsdrp/raw/2012-11-27/NS.20121127.50726.fits"
+        nodB_path = self.root_dir + "/NS.20121127.50726.fits"
         nodB_data = fits.open(nodB_path)[0].data.astype(np.float64)
         nodB = torch.tensor(nodB_data)
 
         # Read in the Bad Pixel mask
         self.bpm = self.load_bad_pixel_mask()
 
-        data_full = torch.stack([nodA, nodB])  # Creats NHW tensor
+        data_full = torch.stack([nodA, nodB])  # Creats NxHxW tensor
 
         # Inpaint bad pixels.  In the future we will simply neglect these pixels
         data_full = self.inpaint_bad_pixels(data_full)
@@ -73,3 +90,62 @@ class FPADataset(Dataset):
         ).squeeze()
         data_tensor[:, self.bpm] = smoothed_data[:, self.bpm]
         return data_tensor
+
+    def create_nirspec_collection(self):
+        """Create a collection of Keck NIRSPEC echelle spectra"""
+        keywords = [
+            "imagetyp",
+            "filname",
+            "slitname",
+            "itime",
+            "frameno",
+            "object",
+            "ut",
+            "airmass",
+            "dispers",
+            "slitwidt",
+            "slitlen",
+            "ra",
+            "dec",
+        ]
+
+        ims = (
+            ccdproc.ImageFileCollection(
+                self.root_dir, keywords=keywords,  # glob_include="NS*.fits",
+            )
+            .filter(dispers="high")
+            .filter(regex_match=True, slitlen="12|24")
+        )
+        return ims
+
+    def get_unique_objects(self):
+        """Return the unique object names from a NIRSPEC collection"""
+
+        objects = np.unique(
+            self.nirspec_collection.filter(imagetyp="object")
+            .summary["object"]
+            .data.data
+        )
+        return objects
+
+    def label_nods_from_coordinates(self, coords):
+        """Label the ABBA nods given Telescope RA, Dec coordinates"""
+        nod_dict = {0: "A", 1: "B"}
+        kmeans = KMeans(n_clusters=2)
+        kmeans.fit(coords)
+        y_pred = kmeans.predict(coords)
+        # Enforce that the first nod is usually "A"
+        if y_pred[0] != 0:
+            y_pred = 1 - y_pred
+        return [nod_dict[key] for key in y_pred]
+
+    # def label_nirspec_nods(self):
+    #    """Label the ABBA nods in-place given a nirspec collection"""
+    #    for object in self.unique_objects:
+    #        target_subset = self.nirspec_collection.filter(
+    #            imagetyp="object", object=object
+    #        )
+    #        target_table = target_subset.summary[["file", "object", "ra", "dec"]]
+    #        coords = np.vstack([target_table[col].data.data for col in ["ra", "dec"]]).T
+    #        target_subset.summary["nod"] = self.label_nods_from_coordinates(coords)
+
