@@ -36,18 +36,12 @@ class FPADataset(Dataset):
         nodB = torch.tensor(nodB_data)
 
         # Read in the Bad Pixel mask
-        bad_pixel_mask_path = "../../zoja/ccdproc/reduced/static/bad_pixel_mask.fits"
-        bpm_data = fits.open(bad_pixel_mask_path)[0].data.astype(np.bool)
-        bpm = torch.tensor(bpm_data)
+        self.bpm = self.load_bad_pixel_mask()
 
-        data_full = torch.stack([nodA, nodB])
+        data_full = torch.stack([nodA, nodB])  # Creats NHW tensor
 
         # Inpaint bad pixels.  In the future we will simply neglect these pixels
-        smoothed_data = kornia.filters.median_blur(
-            data_full.unsqueeze(1), (5, 5)
-        ).squeeze()
-        data_full[:, bpm] = smoothed_data[:, bpm]
-
+        data_full = self.inpaint_bad_pixels(data_full)
         data = data_full[:, ybounds[0] : ybounds[1], :]
         data = data.permute(0, 2, 1)
 
@@ -59,3 +53,23 @@ class FPADataset(Dataset):
 
     def __len__(self):
         return len(self.pixels[:, 0, 0])
+
+    def load_bad_pixel_mask(self):
+        """Load the global bad pixel mask"""
+        bad_pixel_mask_path = "../../zoja/ccdproc/reduced/static/bad_pixel_mask.fits"
+        bpm_data = fits.open(bad_pixel_mask_path)[0].data.astype(np.bool)
+        return torch.tensor(bpm_data)
+
+    def inpaint_bad_pixels(self, data_tensor):
+        """Inpaint the bad pixels
+        
+        Args:
+            data_tensor (tensor of shape NHW): Tensor of data destined for masking 
+                in on the HW axis, and reapplied over all elements in batch axis.
+        
+        """
+        smoothed_data = kornia.filters.median_blur(
+            data_tensor.unsqueeze(1), (5, 5)
+        ).squeeze()
+        data_tensor[:, self.bpm] = smoothed_data[:, self.bpm]
+        return data_tensor
