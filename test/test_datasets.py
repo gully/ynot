@@ -5,6 +5,7 @@ from ynot.datasets import FPADataset
 import ccdproc
 import warnings
 import logging
+import astropy
 
 logging.getLogger("ccdproc").setLevel(logging.ERROR)
 
@@ -22,32 +23,32 @@ def test_pixels():
     assert hasattr(data, "index")
 
 
-def test_ccdproc():
-    """Does CCDProc work and can we silence its warnings"""
-    keywords = [
-        "imagetyp",
-        "filname",
-        "slitname",
-        "itime",
-        "frameno",
-        "object",
-        "ut",
-        "airmass",
-        "dispers",
-        "slitwidt",
-        "slitlen",
-        "ra",
-        "dec",
+def test_dataset_image_collection():
+    """Does dataet initialization work and can we silence ccdproc warnings"""
+    data = FPADataset(root_dir="data/2012-11-27/")
+
+    assert data.nirspec_collection is not None
+
+    attributes = [
+        "ccds",
+        "data",
+        "ext",
+        "files",
+        "hdus",
+        "headers",
+        "location",
+        "files_filtered",
+        "filter",
+        "keywords",
+        "summary",
+        "values",
     ]
+    for attribute in attributes:
+        assert hasattr(data.nirspec_collection, attribute)
 
-    with warnings.catch_warnings():
-        warnings.simplefilter("ignore")
-        ims = (
-            ccdproc.ImageFileCollection(
-                "data/2012-11-27/", keywords=keywords, glob_include="NS*.fits",
-            )
-            .filter(dispers="high")
-            .filter(regex_match=True, slitlen="12|24")
-        )
-
-    assert ims is not None
+    assert type(data.nirspec_collection) == ccdproc.image_collection.ImageFileCollection
+    assert type(data.nirspec_collection.summary) == astropy.table.table.Table
+    assert len(data.nirspec_collection.files) > 1
+    assert len(list(data.nirspec_collection.headers())) == len(
+        data.nirspec_collection.files
+    )
