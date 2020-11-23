@@ -116,3 +116,4 @@ test/*.png
 
 # Ignore old Jupyter Notebooks for now
 notebooks/
+test/data
