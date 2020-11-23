@@ -67,6 +67,7 @@ class FPADataset(Dataset):
             data_full = self.inpaint_bad_pixels(data_full)
 
         self.n_images = len(data_full[:, 0, 0])
+        self.gain = 5.8  # e/ADU, per NIRSPEC documentation
 
         if inpaint_cosmic_rays:
             for ii in range(self.n_images):
@@ -74,7 +75,7 @@ class FPADataset(Dataset):
                 out = ccdproc.cosmicray_lacosmic(
                     nod_ccd,
                     readnoise=23.0,
-                    gain=5.8,
+                    gain=self.gain,
                     verbose=False,
                     satlevel=1.0e7,
                     sigclip=7.0,
@@ -83,6 +84,8 @@ class FPADataset(Dataset):
                     fsmode="median",
                 )
                 data_full[ii] = torch.tensor(out.data)
+        else:
+            data_full = data_full * self.gain
 
         data = data_full[:, ybounds[0] : ybounds[1], :]
         data = data.permute(0, 2, 1)
