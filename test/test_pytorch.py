@@ -3,7 +3,6 @@ from torch import nn
 
 
 class SimpleNN(nn.Module):
-
     def __init__(self, bounds=(10, 15)):
         super().__init__()
         self.mm = nn.Parameter(torch.tensor([1.0], requires_grad=True))
@@ -19,7 +18,7 @@ def test_torch():
     """Make sure we know how to cast dypes and devices of models"""
     model = SimpleNN()
 
-    device = 'cuda'
+    device = "cuda"
 
     model = model.to(device)
     x = torch.arange(10.0).to(device)

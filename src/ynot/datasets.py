@@ -35,13 +35,19 @@ class FPADataset(Dataset):
 
     """
 
-    def __init__(self, ybounds=(425, 510), root_dir=None, inpaint_bad_pixels=False):
+    def __init__(
+        self,
+        ybounds=(425, 510),
+        root_dir=None,
+        inpaint_bad_pixels=False,
+        inpaint_cosmic_rays=False,
+    ):
         super().__init__()
 
         if root_dir is None:
             root_dir = "/home/gully/GitHub/ynot/test/data/2012-11-27/"
         self.root_dir = root_dir
-        # self.nirspec_collection = self.create_nirspec_collection()
+        self.nirspec_collection = self.create_nirspec_collection()
         # self.unique_objects = self.get_unique_objects()
         # self.label_nirspec_nods()
         nodA_path = self.root_dir + "/NS.20121127.49332.fits"
@@ -55,11 +61,29 @@ class FPADataset(Dataset):
         # Read in the Bad Pixel mask
         self.bpm = self.load_bad_pixel_mask()
 
-        data_full = torch.stack([nodA, nodB])  # Creats NxHxW tensor
-
+        data_full = torch.stack([nodA, nodB])  # Creates NxHxW tensor
         # Inpaint bad pixels.  In the future we will simply neglect these pixels
         if inpaint_bad_pixels:
             data_full = self.inpaint_bad_pixels(data_full)
+
+        self.n_images = len(data_full[:, 0, 0])
+
+        if inpaint_cosmic_rays:
+            for ii in range(self.n_images):
+                nod_ccd = CCDData(data_full[ii].numpy(), unit="adu")
+                out = ccdproc.cosmicray_lacosmic(
+                    nod_ccd,
+                    readnoise=23.0,
+                    gain=5.8,
+                    verbose=False,
+                    satlevel=1.0e7,
+                    sigclip=7.0,
+                    sepmed=False,
+                    cleantype="medmask",
+                    fsmode="median",
+                )
+                data_full[ii] = torch.tensor(out.data)
+
         data = data_full[:, ybounds[0] : ybounds[1], :]
         data = data.permute(0, 2, 1)
 
@@ -110,9 +134,10 @@ class FPADataset(Dataset):
             "dec",
         ]
         with warnings.catch_warnings():
+            warnings.simplefilter("ignore")
             ims = (
                 ccdproc.ImageFileCollection(
-                    self.root_dir, keywords=keywords,  # glob_include="NS*.fits",
+                    self.root_dir, keywords=keywords, glob_include="NS*.fits",
                 )
                 .filter(dispers="high")
                 .filter(regex_match=True, slitlen="12|24")
