@@ -18,6 +18,10 @@ import ccdproc
 import astropy.units as u
 from astropy.nddata import CCDData
 from sklearn.cluster import KMeans
+import warnings
+import logging
+
+logging.getLogger("ccdproc").setLevel(logging.ERROR)
 
 
 # custom dataset loader
@@ -35,10 +39,10 @@ class FPADataset(Dataset):
         super().__init__()
 
         if root_dir is None:
-            root_dir = "/home/gully/GitHub/zoja/nsdrp/raw/2012-11-27/"
+            root_dir = "/home/gully/GitHub/ynot/test/data/2012-11-27/"
         self.root_dir = root_dir
-        self.nirspec_collection = self.create_nirspec_collection()
-        self.unique_objects = self.get_unique_objects()
+        # self.nirspec_collection = self.create_nirspec_collection()
+        # self.unique_objects = self.get_unique_objects()
         # self.label_nirspec_nods()
         nodA_path = self.root_dir + "/NS.20121127.49332.fits"
         nodA_data = fits.open(nodA_path)[0].data.astype(np.float64)
@@ -105,14 +109,14 @@ class FPADataset(Dataset):
             "ra",
             "dec",
         ]
-
-        ims = (
-            ccdproc.ImageFileCollection(
-                self.root_dir, keywords=keywords,  # glob_include="NS*.fits",
+        with warnings.catch_warnings():
+            ims = (
+                ccdproc.ImageFileCollection(
+                    self.root_dir, keywords=keywords,  # glob_include="NS*.fits",
+                )
+                .filter(dispers="high")
+                .filter(regex_match=True, slitlen="12|24")
             )
-            .filter(dispers="high")
-            .filter(regex_match=True, slitlen="12|24")
-        )
         return ims
 
     def get_unique_objects(self):
