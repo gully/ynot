@@ -56,29 +56,31 @@ def test_image_collection():
 
 @pytest.mark.slow
 def test_pixel_masking():
-    """Does dataet initialization work and can we silence ccdproc warnings"""
+    """Does dataset initialization work and can we silence ccdproc warnings"""
 
     t0 = time.time()
-    data = FPADataset(root_dir="data/2012-11-27/")
+    data_v1 = FPADataset(root_dir="data/2012-11-27/")
     t1 = time.time()
     net_time = t1 - t0
     print(f"\n\tNo inpainting: {net_time:0.5f} seconds", end="\t")
 
-    assert type(data.bpm) == torch.Tensor
+    assert type(data_v1.bpm) == torch.Tensor
 
     t0 = time.time()
-    data = FPADataset(root_dir="data/2012-11-27/", inpaint_bad_pixels=True)
+    data_v2 = FPADataset(root_dir="data/2012-11-27/", inpaint_bad_pixels=True)
     t1 = time.time()
     net_time = t1 - t0
     print(f"\n\tInpaint bad pixels: {net_time:0.5f} seconds", end="\t")
+    assert torch.var(data_v2.pixels) < torch.var(data_v1.pixels)
 
     t0 = time.time()
-    data = FPADataset(
+    data_v3 = FPADataset(
         root_dir="data/2012-11-27/", inpaint_bad_pixels=True, inpaint_cosmic_rays=True
     )
     t1 = time.time()
     net_time = t1 - t0
     print(f"\n\tInpaint cosmic rays: {net_time:0.5f} seconds", end="\t")
 
-    assert type(data.pixels) == torch.Tensor
-    assert data.pixels.dtype == torch.float64
+    assert type(data_v3.pixels) == torch.Tensor
+    assert data_v3.pixels.dtype == torch.float64
+    assert torch.var(data_v3.pixels) < torch.var(data_v2.pixels)
