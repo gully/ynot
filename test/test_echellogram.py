@@ -57,13 +57,13 @@ def test_scene_model(device):
     assert scene_model.dtype == echellogram.xx.dtype
 
     t0 = time.time()
-    scene_model = echellogram.native_pixel_model(echellogram.amps, echellogram.λ_vector)
+    scene_model = echellogram.native_pixel_model(echellogram.src_amps, echellogram.λ_src_vector)
     t1 = time.time()
     net_time = t1 - t0
     print(f"\n\t{echellogram.device}: {net_time:0.5f} seconds", end="\t")
-    assert echellogram.amps.shape == (echellogram.n_amps,)
-    assert echellogram.λ_vector.shape == (echellogram.n_amps,)
-    assert echellogram.λ_vector.dtype == echellogram.xx.dtype
+    assert echellogram.src_amps.shape == (echellogram.n_amps,)
+    assert echellogram.λ_src_vector.shape == (echellogram.n_amps,)
+    assert echellogram.λ_src_vector.dtype == echellogram.xx.dtype
     assert scene_model.shape == echellogram.xx.shape
     assert scene_model.dtype == echellogram.xx.dtype
 

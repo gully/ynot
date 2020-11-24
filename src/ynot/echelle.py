@@ -18,8 +18,8 @@ Echellogram
 
 import torch
 from torch import nn
-import math
 from torch.distributions import Normal
+import pandas as pd
 
 
 class Echellogram(nn.Module):
@@ -32,7 +32,7 @@ class Echellogram(nn.Module):
             Default: (425, 510)
     """
 
-    def __init__(self, device="cuda", ybounds=(425, 510)):
+    def __init__(self, device="cuda", ybounds=(425, 510), dense_sky=False):
         super().__init__()
 
         self.device = device
@@ -59,8 +59,8 @@ class Echellogram(nn.Module):
             )
         )
         self.n_amps = 1500
-        self.amps = nn.Parameter(
-            180.0
+        self.src_amps = nn.Parameter(
+            60.0
             * torch.ones(
                 self.n_amps, requires_grad=True, dtype=torch.float64, device=device
             )
@@ -87,27 +87,46 @@ class Echellogram(nn.Module):
                 device=device,
             )
         )
-        self.src_amps = nn.Parameter(
-            60.0
-            * torch.ones(
-                self.n_amps, requires_grad=True, dtype=torch.float64, device=device
-            )
-        )
 
         # Set the s(x,y), and λ(x,y) coordinates
         self.ss = self.s_of_xy(self.s_coeffs)
         self.λλ = self.lam_xy(self.lam_coeffs)
         self.emask = self.edge_mask(self.smoothness)
+        self.λλ_min = self.λλ.min().detach().item()
+        self.λλ_max = self.λλ.max().detach().item()
 
         # The wavelength vector should not require grad.
-        self.λ_vector = torch.linspace(
-            self.λλ.min().item(),
-            self.λλ.max().item(),
+        self.λ_src_vector = torch.linspace(
+            self.λλ_min,
+            self.λλ_max,
             self.n_amps,
             device=self.device,
             requires_grad=False,
             dtype=torch.float64,
         )
+
+        # For dense sky sampling (no wavelength calibration)
+        if dense_sky:
+            self.n_sky = self.n_amps
+            self.λ_sky_vector = self.λ_src_vector
+            self.sky_amps = nn.Parameter(
+                180.0
+                * torch.ones(
+                    self.n_amps, requires_grad=True, dtype=torch.float64, device=device
+                )
+            )
+            self.sky_model_function = self.dense_sky_model
+        else:
+            self.λ_sky_vector, peaks = self.get_skyline_wavelengths()
+            self.n_sky = len(self.λ_sky_vector)
+            self.sky_amps = nn.Parameter(
+                peaks
+                * 10.0
+                * torch.ones(
+                    self.n_sky, requires_grad=True, dtype=torch.float64, device=device,
+                )
+            )
+            self.sky_model_function = self.sparse_sky_model
 
     def forward(self, index):
         """The forward pass of the neural network model
@@ -205,6 +224,16 @@ class Echellogram(nn.Module):
             amp_of_lambda.unsqueeze(0).unsqueeze(0) * torch.exp(log_scene_cube)
         ).sum(axis=2)
 
+    def dense_sky_model(self):
+        """A sky model with dense (~1400) spectral lines"""
+        return self.native_pixel_model(self.sky_amps, self.λ_sky_vector)
+
+    def sparse_sky_model(self):
+        """A sky model with a few (~3-10) spectral lines"""
+        sky_lines = self.native_pixel_model(self.sky_amps, self.λ_sky_vector)
+        sky_continuum = 300.0  ## Replace with a smooth mean-model
+        return sky_lines + sky_continuum
+
     def source_profile_simple(self, p_coeffs):
         """The profile of the sky source, given position and width coefficients and s
 
@@ -220,9 +249,24 @@ class Echellogram(nn.Module):
         self.ss = self.s_of_xy(self.s_coeffs)
         self.λλ = self.lam_xy(self.lam_coeffs)
         self.emask = self.edge_mask(self.smoothness)
-        sky_model = self.native_pixel_model(self.amps, self.λ_vector)
-        src_model = self.native_pixel_model(self.src_amps, self.λ_vector)
+        sky_model = self.sky_model_function()
+        src_model = self.native_pixel_model(self.src_amps, self.λ_src_vector)
         src_prof = self.source_profile_simple(self.p_coeffs[index].squeeze())
         net_sky = self.emask * sky_model
         net_src = src_prof * src_model
         return net_sky + net_src + self.bkg_const
+
+    def get_skyline_wavelengths(self):
+        """Get the wavelengths of bright sky lines (e.g. OH)"""
+        df = pd.read_csv(
+            "/home/gully/GitHub/ynot/data/ir_ohlines.dat",
+            names=["wl", "rel_flux"],
+            delim_whitespace=True,
+        )
+        df = df[(df.wl > self.λλ_min) & (df.wl < self.λλ_max)]
+        wls = torch.tensor(df.wl.values, device=self.device, dtype=torch.float64)
+        peaks = torch.tensor(
+            df.rel_flux.values, device=self.device, dtype=torch.float64
+        )
+        return (wls, peaks)
+
