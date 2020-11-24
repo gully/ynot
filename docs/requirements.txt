@@ -4,3 +4,4 @@ torch
 astropy
 kornia
 pandas
+ccdproc
