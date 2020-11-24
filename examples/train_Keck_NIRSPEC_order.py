@@ -24,10 +24,8 @@ parser.add_argument(
 )
 
 args = parser.parse_args()
-print(args)
 
 writer = SummaryWriter(log_dir="runs/exp1")
-webbrowser.open("http://localhost:6006/", new=2)
 
 
 def plot_scene_model(images):
@@ -48,7 +46,7 @@ def plot_scene_model(images):
 # Warning, it will be about 30X slower.
 device = "cuda"
 
-model = Echellogram(device=device, dense_sky=False)
+model = Echellogram(device=device, dense_sky=True)
 model = model.to(device, non_blocking=True)
 dataset = FPADataset(
     root_dir="../test/data/2012-11-27/",
@@ -69,12 +67,16 @@ n_frames_per_batch = 1
 train_loader = DataLoader(dataset=dataset, batch_size=n_frames_per_batch, shuffle=True)
 
 loss_fn = nn.MSELoss(reduction="mean")
-optimizer = optim.Adam(model.parameters(), 0.02)
+optimizer = optim.Adam(model.parameters(), 0.004)
 
 # It currently takes 0.5 seconds per training epoch, for about 7200 epochs per hour
+webbrowser.open("http://localhost:6006/", new=2)
 n_epochs = args.n_epochs
 
 losses = []
+
+# Mask the last 24 pixel columns
+mask = model.xx < 1000
 
 t0 = time.time()
 t_iter = trange(n_epochs, desc="Training", leave=True)
@@ -85,9 +87,11 @@ for epoch in t_iter:
             data[1].to(device, non_blocking=True),
         )
         model.train()
-        yhat = model.forward(ind).unsqueeze(0)
+        y_batch_vec = y_batch.squeeze()[mask]
+        yhat = model.forward(ind)
+        yhat_vec = yhat[mask]
         loss = loss_fn(yhat, y_batch)
-        loss.backward(retain_graph=True)
+        loss.backward(retain_graph=False)
         optimizer.step()
         optimizer.zero_grad()
         losses.append(loss.item())

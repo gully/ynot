@@ -46,10 +46,11 @@ class Echellogram(nn.Module):
         self.yvec = torch.arange(0, self.ny, device=device).double()
         self.xx, self.yy = torch.meshgrid(self.xvec, self.yvec)
 
+        # This is sampled in log
         self.bkg_const = nn.Parameter(
-            torch.tensor(1000.0, requires_grad=True, dtype=torch.float64, device=device)
+            torch.tensor(6.9, requires_grad=True, dtype=torch.float64, device=device)
         )
-        # self.sky_const = nn.Parameter(torch.tensor(50.0, requires_grad=True, dtype=torch.float64, device='cuda'))
+
         self.s_coeffs = nn.Parameter(
             torch.tensor(
                 [14.635, 0.20352, -0.004426],
@@ -59,8 +60,10 @@ class Echellogram(nn.Module):
             )
         )
         self.n_amps = 1500
+
+        # These represent inputs to log.
         self.src_amps = nn.Parameter(
-            60.0
+            4.1
             * torch.ones(
                 self.n_amps, requires_grad=True, dtype=torch.float64, device=device
             )
@@ -110,7 +113,7 @@ class Echellogram(nn.Module):
             self.n_sky = self.n_amps
             self.λ_sky_vector = self.λ_src_vector
             self.sky_amps = nn.Parameter(
-                180.0
+                5.2
                 * torch.ones(
                     self.n_amps, requires_grad=True, dtype=torch.float64, device=device
                 )
@@ -119,23 +122,30 @@ class Echellogram(nn.Module):
         else:
             self.λ_sky_vector, peaks = self.get_skyline_wavelengths()
             self.n_sky = len(self.λ_sky_vector)
+
+            # These will be treated as natural logs
             self.sky_amps = nn.Parameter(
-                peaks
-                * 10.0
+                torch.log(peaks)
+                + 2.3
                 * torch.ones(
                     self.n_sky, requires_grad=True, dtype=torch.float64, device=device,
                 )
             )
+            # Sampled in log
             self.sky_continuum_coeffs = nn.Parameter(
                 torch.tensor(
-                    [300.0, 10.0, -6.0, -1.0],
+                    [5.7, 0.0, 0.0, 0.0],
                     requires_grad=True,
                     dtype=torch.float64,
                     device=device,
                 )
             )
 
-            self.λn = 2 * (self.λλ - self.λλ.mean()) / (self.λλ.max() - self.λλ.min())
+            # The grad needlessly adds memory to the backpropagation for this smooth function
+            with torch.no_grad():
+                self.λn = (
+                    2 * (self.λλ - self.λλ.mean()) / (self.λλ.max() - self.λλ.min())
+                )
             self.cheb_array = torch.stack(
                 [
                     torch.ones_like(self.xx, device=device),
@@ -244,11 +254,11 @@ class Echellogram(nn.Module):
 
     def dense_sky_model(self):
         """A sky model with dense (~1400) spectral lines"""
-        return self.native_pixel_model(self.sky_amps, self.λ_sky_vector)
+        return self.native_pixel_model(torch.exp(self.sky_amps), self.λ_sky_vector)
 
     def sparse_sky_model(self):
         """A sky model with a few (~3-10) spectral lines"""
-        sky_lines = self.native_pixel_model(self.sky_amps, self.λ_sky_vector)
+        sky_lines = self.native_pixel_model(torch.exp(self.sky_amps), self.λ_sky_vector)
         sky_continuum = self.sky_continuum_model()
         return sky_lines + sky_continuum
 
@@ -258,10 +268,10 @@ class Echellogram(nn.Module):
         Returns:
             (torch.tensor): the 2D sky emission continuum
         """
-        sky_cont = (
+        log_sky_cont = (
             self.cheb_array * self.sky_continuum_coeffs.unsqueeze(1).unsqueeze(2)
         ).sum(0)
-        return sky_cont
+        return torch.exp(log_sky_cont)
 
     def source_profile_simple(self, p_coeffs):
         """The profile of the sky source, given position and width coefficients and s
@@ -279,11 +289,11 @@ class Echellogram(nn.Module):
         self.λλ = self.lam_xy(self.lam_coeffs)
         self.emask = self.edge_mask(self.smoothness)
         sky_model = self.sky_model_function()
-        src_model = self.native_pixel_model(self.src_amps, self.λ_src_vector)
+        src_model = self.native_pixel_model(torch.exp(self.src_amps), self.λ_src_vector)
         src_prof = self.source_profile_simple(self.p_coeffs[index].squeeze())
         net_sky = self.emask * sky_model
         net_src = src_prof * src_model
-        return net_sky + net_src + self.bkg_const
+        return net_sky + net_src + torch.exp(self.bkg_const)
 
     def get_skyline_wavelengths(self):
         """Get the wavelengths of bright sky lines (e.g. OH)"""
