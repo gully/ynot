@@ -17,9 +17,7 @@ parser = argparse.ArgumentParser(
     description="Experimental astronomical echellogram inference"
 )
 parser.add_argument(
-    "--resume",
-    action="store_true",
-    help="Resume model from last existing saved model",
+    "--resume", action="store_true", help="Resume model from last existing saved model",
 )
 parser.add_argument(
     "--n_epochs", default=1800, type=int, help="Number of training epochs"
@@ -29,7 +27,7 @@ args = parser.parse_args()
 print(args)
 
 writer = SummaryWriter(log_dir="runs/exp1")
-webbrowser.open('http://localhost:6006/', new=2)
+webbrowser.open("http://localhost:6006/", new=2)
 
 
 def plot_scene_model(images):
@@ -38,8 +36,8 @@ def plot_scene_model(images):
     and labels from a batch
     """
     fig, axes = plt.subplots(3, figsize=(8, 3))
-    axes[0].imshow(images[0].numpy().T, vmin=0, vmax=300, origin="lower")
-    axes[1].imshow(images[1].numpy().T, vmin=0, vmax=300, origin="lower")
+    axes[0].imshow(images[0].numpy().T, vmin=0, vmax=2500, origin="lower")
+    axes[1].imshow(images[1].numpy().T, vmin=0, vmax=2500, origin="lower")
     axes[2].imshow(
         images[0].numpy().T - images[1].numpy().T, vmin=-100, vmax=100, origin="lower"
     )
@@ -52,7 +50,11 @@ device = "cuda"
 
 model = Echellogram(device=device)
 model = model.to(device, non_blocking=True)
-dataset = FPADataset()
+dataset = FPADataset(
+    root_dir="../test/data/2012-11-27/",
+    inpaint_bad_pixels=True,
+    inpaint_cosmic_rays=True,
+)
 
 # Initialize from a previous training run
 state_dict = torch.load("model_coeffs.pt")

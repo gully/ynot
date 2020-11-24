@@ -47,7 +47,7 @@ class Echellogram(nn.Module):
         self.xx, self.yy = torch.meshgrid(self.xvec, self.yvec)
 
         self.bkg_const = nn.Parameter(
-            torch.tensor(200.0, requires_grad=True, dtype=torch.float64, device=device)
+            torch.tensor(1000.0, requires_grad=True, dtype=torch.float64, device=device)
         )
         # self.sky_const = nn.Parameter(torch.tensor(50.0, requires_grad=True, dtype=torch.float64, device='cuda'))
         self.s_coeffs = nn.Parameter(
@@ -60,7 +60,8 @@ class Echellogram(nn.Module):
         )
         self.n_amps = 1500
         self.amps = nn.Parameter(
-            30.0*torch.ones(
+            180.0
+            * torch.ones(
                 self.n_amps, requires_grad=True, dtype=torch.float64, device=device
             )
         )
@@ -81,13 +82,14 @@ class Echellogram(nn.Module):
         self.p_coeffs = nn.Parameter(
             torch.tensor(
                 [[3.0, -1.0], [9.0, -1.0]],
-                requires_grad=False, # Fix for now!
+                requires_grad=True,  # Fix for now!
                 dtype=torch.float64,
                 device=device,
             )
         )
         self.src_amps = nn.Parameter(
-            10.0*torch.ones(
+            60.0
+            * torch.ones(
                 self.n_amps, requires_grad=True, dtype=torch.float64, device=device
             )
         )
