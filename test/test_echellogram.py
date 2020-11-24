@@ -16,13 +16,14 @@ def test_cuda():
 def test_echelle_device():
     """Can we cast the model to GPU?"""
 
-    device = 'cuda'
-    echellogram = Echellogram(device='cuda')
-    echellogram = echellogram.to(device) #no-op
+    device = "cuda"
+    echellogram = Echellogram(device="cuda")
+    echellogram = echellogram.to(device)  # no-op
 
     assert echellogram.xx.device.type == device
     output = echellogram.forward(1)
     assert echellogram.xx.device.type == device
+
 
 @pytest.mark.parametrize(
     "attribute",
@@ -57,7 +58,9 @@ def test_scene_model(device):
     assert scene_model.dtype == echellogram.xx.dtype
 
     t0 = time.time()
-    scene_model = echellogram.native_pixel_model(echellogram.src_amps, echellogram.λ_src_vector)
+    scene_model = echellogram.native_pixel_model(
+        echellogram.src_amps, echellogram.λ_src_vector
+    )
     t1 = time.time()
     net_time = t1 - t0
     print(f"\n\t{echellogram.device}: {net_time:0.5f} seconds", end="\t")
@@ -66,6 +69,7 @@ def test_scene_model(device):
     assert echellogram.λ_src_vector.dtype == echellogram.xx.dtype
     assert scene_model.shape == echellogram.xx.shape
     assert scene_model.dtype == echellogram.xx.dtype
+
 
 @pytest.mark.parametrize(
     "device", ["cuda", "cpu"],
@@ -77,12 +81,31 @@ def test_sky_model(device):
     assert scene_model.shape == echellogram.xx.shape
     assert scene_model.dtype == echellogram.xx.dtype
     assert len(echellogram.sky_amps) > 1000
+    assert not hasattr(echellogram, "sky_continuum_coeffs")
+    assert not hasattr(echellogram, "λn")
 
     echellogram = Echellogram(device=device, dense_sky=False)
     scene_model = echellogram.sky_model_function()
     assert scene_model.shape == echellogram.xx.shape
     assert scene_model.dtype == echellogram.xx.dtype
     assert len(echellogram.sky_amps) > 1
+
+    assert hasattr(echellogram, "sky_continuum_coeffs")
+    assert hasattr(echellogram, "λn")
+    assert hasattr(echellogram, "cheb_array")
+    assert echellogram.λn.shape == echellogram.xx.shape
+    assert echellogram.cheb_array.shape[1:3] == echellogram.xx.shape
+    assert echellogram.cheb_array.shape[0] == 4
+    assert echellogram.λn.max() < 1.2
+    assert echellogram.λn.min() > -1.2
+
+    sky_cont = (
+        echellogram.cheb_array
+        * echellogram.sky_continuum_coeffs.unsqueeze(1).unsqueeze(2)
+    ).sum(0)
+
+    assert sky_cont is not None
+    assert sky_cont.shape == echellogram.xx.shape
 
 
 @pytest.mark.parametrize(
@@ -114,6 +137,7 @@ def test_forward(device):
     assert scene_model.shape == echellogram.xx.shape
     assert scene_model.dtype == echellogram.xx.dtype
 
+
 @pytest.mark.parametrize(
     "device", ["cuda", "cpu"],
 )
@@ -123,6 +147,7 @@ def test_parameters(device):
     for parameter in echellogram.parameters():
         assert parameter.isfinite().all()
 
+
 def test_trace_profile():
     """Does the trace profile have the right shape?"""
     echellogram = Echellogram()
@@ -131,7 +156,7 @@ def test_trace_profile():
     assert profile.shape == echellogram.xx.shape
     assert profile.dtype == echellogram.xx.dtype
 
-    assert echellogram.p_coeffs.shape == (2,2)
+    assert echellogram.p_coeffs.shape == (2, 2)
     assert echellogram.p_coeffs[0].shape == (2,)
     profile = echellogram.source_profile_simple(echellogram.p_coeffs[0].squeeze())
     assert profile.shape == echellogram.xx.shape

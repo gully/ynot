@@ -126,6 +126,24 @@ class Echellogram(nn.Module):
                     self.n_sky, requires_grad=True, dtype=torch.float64, device=device,
                 )
             )
+            self.sky_continuum_coeffs = nn.Parameter(
+                torch.tensor(
+                    [300.0, 10.0, -6.0, -1.0],
+                    requires_grad=True,
+                    dtype=torch.float64,
+                    device=device,
+                )
+            )
+
+            self.λn = 2 * (self.λλ - self.λλ.mean()) / (self.λλ.max() - self.λλ.min())
+            self.cheb_array = torch.stack(
+                [
+                    torch.ones_like(self.xx, device=device),
+                    self.λn,
+                    2 * self.λn ** 2 - 1,
+                    4 * self.λn ** 3 - 3 * self.λn,
+                ]
+            ).to(device)
             self.sky_model_function = self.sparse_sky_model
 
     def forward(self, index):
@@ -231,8 +249,19 @@ class Echellogram(nn.Module):
     def sparse_sky_model(self):
         """A sky model with a few (~3-10) spectral lines"""
         sky_lines = self.native_pixel_model(self.sky_amps, self.λ_sky_vector)
-        sky_continuum = 300.0  ## Replace with a smooth mean-model
+        sky_continuum = self.sky_continuum_model()
         return sky_lines + sky_continuum
+
+    def sky_continuum_model(self):
+        """A smooth model for the background sky emission in sparse-sky models
+
+        Returns:
+            (torch.tensor): the 2D sky emission continuum
+        """
+        sky_cont = (
+            self.cheb_array * self.sky_continuum_coeffs.unsqueeze(1).unsqueeze(2)
+        ).sum(0)
+        return sky_cont
 
     def source_profile_simple(self, p_coeffs):
         """The profile of the sky source, given position and width coefficients and s
