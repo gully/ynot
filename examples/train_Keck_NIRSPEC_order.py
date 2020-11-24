@@ -48,7 +48,7 @@ def plot_scene_model(images):
 # Warning, it will be about 30X slower.
 device = "cuda"
 
-model = Echellogram(device=device)
+model = Echellogram(device=device, dense_sky=False)
 model = model.to(device, non_blocking=True)
 dataset = FPADataset(
     root_dir="../test/data/2012-11-27/",
@@ -57,11 +57,11 @@ dataset = FPADataset(
 )
 
 # Initialize from a previous training run
-state_dict = torch.load("model_coeffs.pt")
 if args.resume:
     # for key in model.state_dict():
     #    model.state_dict()[key] *=0
     #    model.state_dict()[key] += state_dict[key].to(device)
+    state_dict = torch.load("model_coeffs.pt")
     model.load_state_dict(state_dict)
 
 # Only send one frame per batch
@@ -87,7 +87,7 @@ for epoch in t_iter:
         model.train()
         yhat = model.forward(ind).unsqueeze(0)
         loss = loss_fn(yhat, y_batch)
-        loss.backward()
+        loss.backward(retain_graph=True)
         optimizer.step()
         optimizer.zero_grad()
         losses.append(loss.item())
