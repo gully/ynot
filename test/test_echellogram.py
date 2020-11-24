@@ -67,6 +67,23 @@ def test_scene_model(device):
     assert scene_model.shape == echellogram.xx.shape
     assert scene_model.dtype == echellogram.xx.dtype
 
+@pytest.mark.parametrize(
+    "device", ["cuda", "cpu"],
+)
+def test_sky_model(device):
+    """Do the scene models have the right shape"""
+    echellogram = Echellogram(device=device, dense_sky=True)
+    scene_model = echellogram.sky_model_function()
+    assert scene_model.shape == echellogram.xx.shape
+    assert scene_model.dtype == echellogram.xx.dtype
+    assert len(echellogram.sky_amps) > 1000
+
+    echellogram = Echellogram(device=device, dense_sky=False)
+    scene_model = echellogram.sky_model_function()
+    assert scene_model.shape == echellogram.xx.shape
+    assert scene_model.dtype == echellogram.xx.dtype
+    assert len(echellogram.sky_amps) > 1
+
 
 @pytest.mark.parametrize(
     "device", ["cuda", "cpu"],
