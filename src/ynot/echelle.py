@@ -53,7 +53,7 @@ class Echellogram(nn.Module):
 
         self.s_coeffs = nn.Parameter(
             torch.tensor(
-                [14.635, 0.20352, -0.004426],
+                [14.635, 0.20352, -0.004426, 0.0],
                 requires_grad=True,
                 dtype=torch.float64,
                 device=device,
@@ -175,8 +175,8 @@ class Echellogram(nn.Module):
         Returns:
             (torch.tensor): the 2D surface map :math:`s(x,y)`
         """
-        y0, kk, dy0_dx = params
-        s_out = kk * ((self.yy - y0) - dy0_dx * self.xx)
+        y0, kk, dy0_dx, kk_x = params
+        s_out = (kk + kk_x / 100 * self.xx) * ((self.yy - y0) - dy0_dx * self.xx)
         return s_out
 
     def edge_mask(self, log_smoothness):
