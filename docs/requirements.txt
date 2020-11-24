@@ -5,3 +5,4 @@ astropy
 kornia
 pandas
 ccdproc
+scikit-learn
