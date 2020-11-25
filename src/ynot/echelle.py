@@ -43,8 +43,14 @@ class Echellogram(nn.Module):
 
         self.nx = 1024
         self.xvec = torch.arange(0, self.nx, device=device).double()
+        self.xn = (
+            2 * (self.xvec - self.xvec.mean()) / (self.xvec.max() - self.xvec.min())
+        )
         self.yvec = torch.arange(0, self.ny, device=device).double()
         self.xx, self.yy = torch.meshgrid(self.xvec, self.yvec)
+        self.cheb_x = torch.stack(
+            [self.xn ** 0, self.xn ** 1, 2 * self.xn ** 2 - 1]
+        ).to(self.device)
 
         # This is sampled in log
         self.bkg_const = nn.Parameter(
@@ -84,8 +90,8 @@ class Echellogram(nn.Module):
 
         self.p_coeffs = nn.Parameter(
             torch.tensor(
-                [[3.0, -1.0], [9.0, -1.0]],
-                requires_grad=True,  # Fix for now!
+                [[3, -1, 0, 0], [9, -1, 0, 0]],
+                requires_grad=True,
                 dtype=torch.float64,
                 device=device,
             )
@@ -283,6 +289,20 @@ class Echellogram(nn.Module):
         ln_prob = Normal(loc=p_coeffs[0], scale=sigma).log_prob(self.ss)
         return torch.exp(ln_prob)
 
+    def source_profile_medium(self, p_coeffs):
+        """The profile of the sky source, given position, width, trend coefficients
+
+        p_coeffs[0]: Position in arcseconds (0,12)
+        p_coeffs[1]: Width in arcseconds ~1.0
+        p_coeffs[2]: Position drift as a function of x (arcseconds per pixel)
+        p_coeffs[3]: Position drift as a function of x^2 (arcseconds per pixel^2)
+        """
+        sigma = torch.exp(p_coeffs[1])
+        coeffs = p_coeffs[[0, 2, 3]]
+        loc_vector = (coeffs.unsqueeze(1) * self.cheb_x).sum(0)
+        ln_prob = Normal(loc=loc_vector.unsqueeze(1), scale=sigma).log_prob(self.ss)
+        return torch.exp(ln_prob)
+
     def generative_model(self, index):
         """The generative model resembles echelle spectra traces in astronomy data"""
         self.ss = self.s_of_xy(self.s_coeffs)
@@ -290,7 +310,7 @@ class Echellogram(nn.Module):
         self.emask = self.edge_mask(self.smoothness)
         sky_model = self.sky_model_function()
         src_model = self.native_pixel_model(torch.exp(self.src_amps), self.λ_src_vector)
-        src_prof = self.source_profile_simple(self.p_coeffs[index].squeeze())
+        src_prof = self.source_profile_medium(self.p_coeffs[index].squeeze())
         net_sky = self.emask * sky_model
         net_src = src_prof * src_model
         return net_sky + net_src + torch.exp(self.bkg_const)

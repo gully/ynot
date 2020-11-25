@@ -1,5 +1,6 @@
 import pytest
 import torch
+from torch.distributions import Normal
 import time
 from ynot.echelle import Echellogram
 
@@ -150,14 +151,43 @@ def test_parameters(device):
 
 def test_trace_profile():
     """Does the trace profile have the right shape?"""
+
+    # Original, trace center resides at fixed slit coordinate
     echellogram = Echellogram()
     profile_coeffs = torch.tensor([3.2, -1.5]).double()
     profile = echellogram.source_profile_simple(profile_coeffs)
     assert profile.shape == echellogram.xx.shape
     assert profile.dtype == echellogram.xx.dtype
 
-    assert echellogram.p_coeffs.shape == (2, 2)
-    assert echellogram.p_coeffs[0].shape == (2,)
+    # Still works, p_coeffs 2 and 3 are simply ignored in the simple version
     profile = echellogram.source_profile_simple(echellogram.p_coeffs[0].squeeze())
     assert profile.shape == echellogram.xx.shape
     assert profile.dtype == echellogram.xx.dtype
+
+    # New, trace center drifts ever-so-slightly along slit coordinate
+    echellogram = Echellogram()
+    profile_coeffs = (
+        torch.tensor([3.2, -1.5, -0.1, 0.03]).double().to(echellogram.device)
+    )
+    assert profile_coeffs.shape == torch.Size([4])
+
+    profile = echellogram.source_profile_medium(profile_coeffs)
+    assert profile.shape == echellogram.xx.shape
+    assert profile.dtype == echellogram.xx.dtype
+
+    # Original Behavior
+    sigma = torch.exp(profile_coeffs[1])
+    loc = profile_coeffs[0]
+    ln_prob = Normal(loc=loc, scale=sigma).log_prob(echellogram.ss)
+    assert ln_prob.shape == echellogram.ss.shape
+
+    # New Behavior
+    coeffs = profile_coeffs[[0, 2, 3]]
+
+    loc_array = coeffs.unsqueeze(1) * echellogram.cheb_x
+    assert loc_array.shape == torch.Size([3, 1024])
+    loc_vector = loc_array.sum(0)
+    assert loc_vector.shape == torch.Size([1024])
+
+    ln_prob = Normal(loc=loc_vector.unsqueeze(1), scale=sigma).log_prob(echellogram.ss)
+    assert ln_prob.shape == echellogram.ss.shape
