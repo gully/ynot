@@ -30,6 +30,8 @@ class Echellogram(nn.Module):
         device (str): Either "cuda" for GPU acceleration, or "cpu" otherwise
         ybounds (tuple): the :math:`y_0` and :math:`y_{max}` of the raw echellogram to analyze.
             Default: (425, 510)
+        dense_sky (bool): whether or not to treat the sky background as dense (~1400) parameters or fit a few (~3-10) lines from a pre-determined line list.  A pre-determined line list is needed for wavelength calibration, while a dense sky gives the best sky subtraction for weak lines that are not in the line list.  The best approach---a *hybrid* of the two---is not yet implemented.
+            Default: False
     """
 
     def __init__(self, device="cuda", ybounds=(425, 510), dense_sky=False):
