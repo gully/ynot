@@ -1,7 +1,7 @@
 import torch
 import time
 from ynot.datasets import FPADataset
-from ynot.echelle import Echellogram
+from ynot.igrins import IGRINSEchellogram
 from torch.utils.data import DataLoader
 import torch.optim as optim
 import torch.nn as nn
@@ -25,7 +25,7 @@ parser.add_argument(
 
 args = parser.parse_args()
 
-writer = SummaryWriter(log_dir="runs/exp1")
+writer = SummaryWriter(log_dir="runs/exp2")
 
 
 def plot_scene_model(images):
@@ -46,7 +46,7 @@ def plot_scene_model(images):
 # Warning, it will be about 30X slower.
 device = "cuda"
 
-model = Echellogram(device=device, dense_sky=True)
+model = IGRINSEchellogram(device=device, dense_sky=True)
 model = model.to(device, non_blocking=True)
 dataset = FPADataset(
     root_dir="../test/data/2012-11-27/",
