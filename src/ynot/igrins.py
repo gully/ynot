@@ -1,5 +1,5 @@
 """
-echelle
+IGRINS echelle
 -------
 
 Spectral dispersion and slit length axes are generally not perfectly aligned with the rectilinear pixel grid of a spectrograph detector, complicating the extraction of echelle spectroscopy.  There exists some mapping of each 2D :math:`(x,y)` pixel to a new coordinate system of wavelength and slit position :math:`(\lambda,s)`, with :math:`x` and :math:`y` in units of pixels, :math:`\lambda` in units of Ångstroms, and :math:`s` in units of arcseconds.  These surfaces can therefore be represented as scalar functions over :math:`x` and :math:`y`.  The `ynot` project infers this mapping for all pixels in an echelle order.  For example, this mapping could be parameterized as separable polynomials:
@@ -22,9 +22,9 @@ from torch.distributions import Normal
 import pandas as pd
 
 
-class Echellogram(nn.Module):
+class IGRINSEchellogram(nn.Module):
     r"""
-    A PyTorch layer that provides a parameter set and transformations to model echellograms.
+    A PyTorch layer that provides a parameter set and transformations to model IGRINS echellograms.
 
     Args:
         device (str): Either "cuda" for GPU acceleration, or "cpu" otherwise
@@ -43,7 +43,7 @@ class Echellogram(nn.Module):
         self.ny = self.ymax - self.y0
         self.fiducial = torch.tensor([21779.0, 0.310], device=device).double()
 
-        self.nx = 1024
+        self.nx = 2048
         self.xvec = torch.arange(0, self.nx, device=device).double()
         self.xn = (
             2 * (self.xvec - self.xvec.mean()) / (self.xvec.max() - self.xvec.min())
