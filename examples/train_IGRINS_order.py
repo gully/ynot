@@ -1,6 +1,6 @@
 import torch
 import time
-from ynot.datasets import FPADataset
+from ynot.datasets import FPADataset, IGRINSDataset
 from ynot.igrins import IGRINSEchellogram
 from torch.utils.data import DataLoader
 import torch.optim as optim
@@ -46,12 +46,13 @@ def plot_scene_model(images):
 # Warning, it will be about 30X slower.
 device = "cuda"
 
-model = IGRINSEchellogram(device=device, dense_sky=True)
+model = IGRINSEchellogram(device=device, dense_sky=True, ybounds=(490, 510))
 model = model.to(device, non_blocking=True)
-dataset = FPADataset(
-    root_dir="../test/data/2012-11-27/",
-    inpaint_bad_pixels=True,
-    inpaint_cosmic_rays=True,
+dataset = IGRINSDataset(
+    root_dir="../test/data/GS-2020B-Q-318/20201202/",
+    ybounds=(490, 510),
+    inpaint_bad_pixels=False,
+    inpaint_cosmic_rays=False,
 )
 
 # Initialize from a previous training run
@@ -76,7 +77,7 @@ n_epochs = args.n_epochs
 losses = []
 
 # Mask the last 24 pixel columns
-mask = model.xx < 1000
+mask = model.xx < 2048
 
 t0 = time.time()
 t_iter = trange(n_epochs, desc="Training", leave=True)

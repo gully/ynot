@@ -191,7 +191,7 @@ class IGRINSDataset(Dataset):
 
     def __init__(
         self,
-        ybounds=(425, 510),
+        ybounds=(490, 510),
         root_dir=None,
         inpaint_bad_pixels=False,
         inpaint_cosmic_rays=False,
@@ -201,14 +201,14 @@ class IGRINSDataset(Dataset):
         if root_dir is None:
             root_dir = "/home/gully/GitHub/ynot/test/data/GS-2020B-Q-318/20201202/"
         self.root_dir = root_dir
-        self.nirspec_collection = self.create_nirspec_collection()
+        self.igrins_collection = self.create_IGRINS_collection()
         # self.unique_objects = self.get_unique_objects()
         # self.label_nirspec_nods()
-        nodA_path = self.root_dir + "/NS.20121127.49332.fits"
+        nodA_path = self.root_dir + "/SDCH_20201202_0059.fits"
         nodA_data = fits.open(nodA_path)[0].data.astype(np.float64)
         nodA = torch.tensor(nodA_data)
 
-        nodB_path = self.root_dir + "/NS.20121127.50726.fits"
+        nodB_path = self.root_dir + "/SDCH_20201202_0060.fits"
         nodB_data = fits.open(nodB_path)[0].data.astype(np.float64)
         nodB = torch.tensor(nodB_data)
 
@@ -273,41 +273,30 @@ class IGRINSDataset(Dataset):
         data_tensor[:, self.bpm] = smoothed_data[:, self.bpm]
         return data_tensor
 
-    def create_nirspec_collection(self):
+    def create_IGRINS_collection(self):
         """Create a collection of Keck NIRSPEC echelle spectra"""
         keywords = [
-            "imagetyp",
-            "filname",
-            "slitname",
-            "itime",
-            "frameno",
-            "object",
-            "ut",
-            "airmass",
-            "dispers",
-            "slitwidt",
-            "slitlen",
-            "ra",
-            "dec",
+            "OBJECT",
+            "PROGID",
+            "EXPTIME",
+            "OBJTYPE",
+            "FRMTYPE",
+            "UTDATE",
+            "OBJRA",
+            "OBJDEC",
         ]
         with warnings.catch_warnings():
             warnings.simplefilter("ignore")
-            ims = (
-                ccdproc.ImageFileCollection(
-                    self.root_dir, keywords=keywords, glob_include="NS*.fits",
-                )
-                .filter(dispers="high")
-                .filter(regex_match=True, slitlen="12|24")
-            )
+            ims = ccdproc.ImageFileCollection(
+                self.root_dir, keywords=keywords, glob_include="SDCH*.fits",
+            ).filter(OBJTYPE="TAR")
         return ims
 
     def get_unique_objects(self):
         """Return the unique object names from a NIRSPEC collection"""
 
         objects = np.unique(
-            self.nirspec_collection.filter(imagetyp="object")
-            .summary["object"]
-            .data.data
+            self.igrins_collection  # .filter(OBJTYPE="TAR").summary["TAR"].data.data
         )
         return objects
 
