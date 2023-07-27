@@ -178,3 +178,146 @@ class FPADataset(Dataset):
     #        coords = np.vstack([target_table[col].data.data for col in ["ra", "dec"]]).T
     #        target_subset.summary["nod"] = self.label_nods_from_coordinates(coords)
 
+
+class IGRINSDataset(Dataset):
+    r"""Read in two AB nods of an IGRINS Echellogram (experimental)
+
+    Args:
+        ybounds (tuple of ints): the :math:`(y_0, y_{max})` bounds for isolated echelle trace
+        root_dir (str): path to the directory containing 2D echellograms as fits files
+        inpaint_bad_pixels (bool): flag for whether or not to inpaint bad pixels
+
+    """
+
+    def __init__(
+        self,
+        ybounds=(490, 510),
+        root_dir=None,
+        inpaint_bad_pixels=False,
+        inpaint_cosmic_rays=False,
+    ):
+        super().__init__()
+
+        if root_dir is None:
+            root_dir = "/home/gully/GitHub/ynot/test/data/GS-2020B-Q-318/20201202/"
+        self.root_dir = root_dir
+        self.igrins_collection = self.create_IGRINS_collection()
+        # self.unique_objects = self.get_unique_objects()
+        # self.label_nirspec_nods()
+        nodA_path = self.root_dir + "/SDCH_20201202_0059.fits"
+        nodA_data = fits.open(nodA_path)[0].data.astype(np.float64)
+        nodA = torch.tensor(nodA_data)
+
+        nodB_path = self.root_dir + "/SDCH_20201202_0060.fits"
+        nodB_data = fits.open(nodB_path)[0].data.astype(np.float64)
+        nodB = torch.tensor(nodB_data)
+
+        # Read in the Bad Pixel mask
+        self.bpm = self.load_bad_pixel_mask()
+
+        data_full = torch.stack([nodA, nodB])  # Creates NxHxW tensor
+        # Inpaint bad pixels.  In the future we will simply neglect these pixels
+        if inpaint_bad_pixels:
+            data_full = self.inpaint_bad_pixels(data_full)
+
+        self.n_images = len(data_full[:, 0, 0])
+        self.gain = 5.8  # e/ADU, per NIRSPEC documentation
+
+        if inpaint_cosmic_rays:
+            for ii in range(self.n_images):
+                nod_ccd = CCDData(data_full[ii].numpy(), unit="adu")
+                out = ccdproc.cosmicray_lacosmic(
+                    nod_ccd,
+                    readnoise=23.0,
+                    gain=self.gain,
+                    verbose=False,
+                    satlevel=1.0e7,
+                    sigclip=7.0,
+                    sepmed=False,
+                    cleantype="medmask",
+                    fsmode="median",
+                )
+                data_full[ii] = torch.tensor(out.data)
+        else:
+            data_full = data_full * self.gain
+
+        data = data_full[:, ybounds[0] : ybounds[1], :]
+        data = data.permute(0, 2, 1)
+
+        self.pixels = data
+        self.index = torch.tensor([0, 1])
+
+    def __getitem__(self, index):
+        return (self.index[index], self.pixels[index])
+
+    def __len__(self):
+        return len(self.pixels[:, 0, 0])
+
+    def load_bad_pixel_mask(self):
+        """Load the global bad pixel mask"""
+        bad_pixel_mask_path = "../../zoja/ccdproc/reduced/static/bad_pixel_mask.fits"
+        bpm_data = fits.open(bad_pixel_mask_path)[0].data.astype(np.bool)
+        return torch.tensor(bpm_data)
+
+    def inpaint_bad_pixels(self, data_tensor):
+        """Inpaint the bad pixels
+        
+        Args:
+            data_tensor (tensor of shape NHW): Tensor of data destined for masking 
+                in on the HW axis, and reapplied over all elements in batch axis.
+        
+        """
+        smoothed_data = kornia.filters.median_blur(
+            data_tensor.unsqueeze(1), (5, 5)
+        ).squeeze()
+        data_tensor[:, self.bpm] = smoothed_data[:, self.bpm]
+        return data_tensor
+
+    def create_IGRINS_collection(self):
+        """Create a collection of Keck NIRSPEC echelle spectra"""
+        keywords = [
+            "OBJECT",
+            "PROGID",
+            "EXPTIME",
+            "OBJTYPE",
+            "FRMTYPE",
+            "UTDATE",
+            "OBJRA",
+            "OBJDEC",
+        ]
+        with warnings.catch_warnings():
+            warnings.simplefilter("ignore")
+            ims = ccdproc.ImageFileCollection(
+                self.root_dir, keywords=keywords, glob_include="SDCH*.fits",
+            ).filter(OBJTYPE="TAR")
+        return ims
+
+    def get_unique_objects(self):
+        """Return the unique object names from a NIRSPEC collection"""
+
+        objects = np.unique(
+            self.igrins_collection  # .filter(OBJTYPE="TAR").summary["TAR"].data.data
+        )
+        return objects
+
+    def label_nods_from_coordinates(self, coords):
+        """Label the ABBA nods given Telescope RA, Dec coordinates"""
+        nod_dict = {0: "A", 1: "B"}
+        kmeans = KMeans(n_clusters=2)
+        kmeans.fit(coords)
+        y_pred = kmeans.predict(coords)
+        # Enforce that the first nod is usually "A"
+        if y_pred[0] != 0:
+            y_pred = 1 - y_pred
+        return [nod_dict[key] for key in y_pred]
+
+    # def label_nirspec_nods(self):
+    #    """Label the ABBA nods in-place given a nirspec collection"""
+    #    for object in self.unique_objects:
+    #        target_subset = self.nirspec_collection.filter(
+    #            imagetyp="object", object=object
+    #        )
+    #        target_table = target_subset.summary[["file", "object", "ra", "dec"]]
+    #        coords = np.vstack([target_table[col].data.data for col in ["ra", "dec"]]).T
+    #        target_subset.summary["nod"] = self.label_nods_from_coordinates(coords)
+
