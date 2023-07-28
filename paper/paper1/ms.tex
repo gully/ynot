@@ -1,0 +1,233 @@
+%\documentclass[twocolumn]{emulateapj}% change onecolumn to iop for fancy, iop to onecolumn for manuscript
+\documentclass[twocolumn]{aastex63}
+\bibliographystyle{aasjournal}
+
+\usepackage{graphicx}
+\usepackage[caption=false]{subfig}
+\usepackage{amsmath}
+\usepackage{lipsum}
+\usepackage[]{mdframed}
+\usepackage{booktabs}
+
+\usepackage{fontspec}
+\usepackage[T1]{fontenc}
+\usepackage{newtxsf}
+%\setmainfont{Fira Sans Book}[Scale=1.05]
+
+
+\let\pwiflocal=\iffalse \let\pwifjournal=\iffalse
+
+
+
+\shorttitle{Autodiff for 2D echellograms}
+\shortauthors{Gully-Santiago}
+%\bibliographystyle{yahapj}
+
+\begin{document}
+\title{Forward Modeling Raw Pixels of 2D Echellograms with Interpretable Machine Learning}
+
+\author{Michael Gully-Santiago}
+\affiliation{University of Texas at Austin Department of Astronomy}
+
+\author{TBD}
+\affiliation{TBD}
+
+
+\begin{abstract}
+
+  We introduce autodiff for 2D echellogram forward modeling.
+
+\end{abstract}
+
+\keywords{data: data analysis ---  stars: statistics}
+
+
+\section{Introduction}\label{sec:intro}
+
+\begin{mdframed}
+  \textbf{The remarkable promise and pervasiveness of astronomical spectroscopy.} \par
+  \textcolor{lightgray}{\lipsum[1]}
+\end{mdframed}
+
+\begin{mdframed}
+  \textbf{The challenge: instrumental defects and imperfections.} \par
+  \textcolor{lightgray}{\lipsum[2]}
+\end{mdframed}
+
+
+\begin{mdframed}
+  \textbf{Previous work: optimal extraction, spectroperfectionism} \par
+  \textcolor{lightgray}{\lipsum[3]}
+\end{mdframed}
+
+\begin{itemize}
+  \item \citet{1986PASP...98..609H}-- Optimal Extraction
+  \item \citet{2002A&A...385.1095P}-- Echelle spectral Reduction
+  \item \citet{2010PASP..122..248B}-- Spectoperfectionism
+  \item \citet{2014A&A...561A..59Z}-- Flat-relative optimal extraction
+  \item This \texttt{Hogg Blog} Blog Post\footnote{\url{https://hoggresearch.blogspot.com/2019/10/complexifying-optimal-extraction.html}}
+  \item \citet{2020arXiv200805827P}-- New!
+\end{itemize}
+
+
+\begin{mdframed}
+  \textbf{Common assumptions embedded into current techniques} \par
+  - Single point source\par
+  - Source has continuum\par
+  - Continuum is high SNR\par
+  - Relatively few segments of uninterrupted continuum\par
+  - Trends adequately captured by polynomials\par
+  - Symmetric, Gaussian-like PSF\par
+\end{mdframed}
+
+\begin{mdframed}
+  \textbf{Extreme or unusual spectra break these assumptions} \par
+  - brown dwarfs with low SNR and highly structured/missing spectra\par
+  - emission line spectra (no continuum)\par
+  - binary stars on the same slit\par
+  - extended objects (non-point sources)\par
+  - EPRV\par
+\end{mdframed}
+
+\begin{mdframed}
+  \textbf{Many heuristics designed to cope with departures from these assumptions} \par
+  \textcolor{lightgray}{\lipsum[4]}
+\end{mdframed}
+
+\begin{mdframed}
+  \textbf{Philosphy: Each previous spectrum should inform future spectra} \par
+  Treat the instrument as a breathing, dynamic system\par
+  \textcolor{lightgray}{\lipsum[5]}
+\end{mdframed}
+
+\begin{mdframed}
+  \textbf{The epic hero: autodiff and GPUs, PyTorch, flexible models} \par
+  - Why this is only recently possible\par
+  - Why this may be in some ways easier to reason about than heuristics\par
+  - This work: A new autodiff-aware 2D echellogram modeling framework\par
+  \textcolor{lightgray}{\lipsum[6]}
+\end{mdframed}
+
+
+\section{Methodology: Modeling 2D Pixels}
+
+\begin{mdframed}
+  \textbf{A mapping of $(x, y)$ pixel coordinates to $(\lambda, s)$ physical coordinates} \par
+  \textcolor{lightgray}{\lipsum[7]}
+\end{mdframed}
+
+\begin{mdframed}
+  \textbf{How to represent the target spectrum} \par
+  - How to represent the sky spectrum\par
+  - How to represent the target PSF\par
+  - How to represent the sky spatial extent\par
+  - How to represent the slit\par
+\end{mdframed}
+
+
+\subsection{Constructing a Resilient Likelihood}
+\begin{mdframed}
+  \textbf{The need to joint model, regularize, address outliers} \par
+  - The likelihood function and per-pixel uncertainties\par
+  - Arcs: sparsely encode both wavelength and slit position\par
+  - Flats: encode just slit position\par
+  - Darks: encode just background\par
+  - Target spectra: encode wavelength, slit position, target position\par
+  \textcolor{lightgray}{\lipsum[7]}
+\end{mdframed}
+
+
+\section{Results 1: Training on Synthetic Data with Injection/Recovery Tests}
+
+\begin{mdframed}
+  \textbf{Injection/recovery test with noisy data: generating fake data} \par
+  \textcolor{lightgray}{\lipsum[9]}
+\end{mdframed}
+
+\begin{mdframed}
+  \textbf{Initializing of the model and optimization setup} \par
+  \textcolor{lightgray}{\lipsum[10]}
+\end{mdframed}
+
+
+\begin{mdframed}
+  \textbf{Training computational performance} \par
+  - Number of epochs\par
+  - Batching/sparsity\par
+  \textcolor{lightgray}{\lipsum[9]}
+\end{mdframed}
+
+\begin{mdframed}
+  \textbf{Best fit model comparison 1: injection/recovery of initial parameters} \par
+  - Number of epochs\par
+  - Batching/sparsity\par
+  \textcolor{lightgray}{\lipsum[10]}
+\end{mdframed}
+
+\begin{mdframed}
+  \textbf{Best fit model comparison 2: spectrum as unbinned, weighted samples} \par
+  - Number of epochs\par
+  - Batching/sparsity\par
+  \textcolor{lightgray}{\lipsum[11]}
+\end{mdframed}
+
+
+\section{Results 2: Training on real data}
+\begin{mdframed}
+  \textbf{Introduction to real data} \par
+  - Data-preprocessing and heuristics \par
+  \textcolor{lightgray}{\lipsum[12]}
+\end{mdframed}
+
+\begin{mdframed}
+  \textbf{Outcome: reduced spectrum as unbinned, weighted samples} \par
+  - SNR improvement compared to previous methods (head-to-head)\par
+  \textcolor{lightgray}{\lipsum[13]}
+\end{mdframed}
+
+\pagebreak
+\clearpage
+
+\section{Discussion}
+\begin{mdframed}
+  \textbf{The promise for EPRV} \par
+  - Simulation of minor RV shifts\par
+  - Simulation of sub-pixel flat fields \par
+  - Tracking spectrograph state across decades of operation\par
+  \textcolor{lightgray}{\lipsum[14]}
+\end{mdframed}
+
+
+\begin{mdframed}
+  \textbf{Ability to repurpose non-standard data (variable data quality)} \par
+  \textcolor{lightgray}{\lipsum[15]}
+\end{mdframed}
+
+
+\begin{mdframed}
+  \textbf{Conceivable extensions} \par
+  \textcolor{lightgray}{\lipsum[16]}
+\end{mdframed}
+
+
+
+\acknowledgements
+
+
+\facilities{Keck (NIRSPEC), Gaia}
+
+\software{  pandas \citep{mckinney10, reback2020pandas},
+  matplotlib \citep{hunter07},
+  numpy \citep{harris2020array},
+  scipy \citep{jones01},
+  ipython \citep{perez07},
+  pytorch \citep{NEURIPS2019_9015}}
+
+
+
+\clearpage
+
+\bibliographystyle{apj}
+\bibliography{ms}
+
+\end{document}
