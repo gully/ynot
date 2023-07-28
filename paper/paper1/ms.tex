@@ -46,29 +46,22 @@
 
 Virtually all modern insights derived from observational optical spectroscopy first arrive through the lossy, imperfect, and unavoidable process of digitization onto a 2-dimensional focal plane array detector.  Moore's law has propelled the amount of spectrosopic information we can cram onto these detectors, with the number of pixels catapulting up to a billion-fold in 50 years.  Innovative optical designs have made evermore effective use of these pixels with information-rich multi-object, imager slicer, and \`echellogram spectral formats.  The computerized distillation of the target spectrum is generally turnkey.  Facility reduction pipelines provide the humdrum translation of raw 2D pixels to familiar 1D extracted spectra, ideally an afterhought in a practioner's journey from observation to scientific results.
 
-But increasingly our greatest scientific ambitions are pushing against the limits of how much information we can squeeze out of a given spectrographic observation.  The discovery of other Earths, the epoch of reionization, and some of the most important unrealized astronomical discoveries will occur in the margins of what our most powerful spectrographs---even those on \emph{JWST}---can deliver.
+But increasingly our greatest scientific ambitions are pushing against the limits of how much information we can squeeze out of a given spectrographic observation.  The discovery of other Earths, the redshift of the epoch of reionization, and some of the most important unrealized astronomical discoveries in a generation will occur in the margins of what our most powerful spectrographs---even those on \emph{JWST}---can deliver.
 
-The measurement of Extreme Precision Radial Velocity (EPRV) stands out as particularly susceptible to the vagueries of the spectral extraction process.  The instrumental Radial Velocity (RV) precision needed to detect an Earth-like planet around a Sun-like star amounts to about 1 cm/s, or a mere 10 silicon atoms in a typical spectrograph pixel (cite HPF).  These extreme precision demands have catalyzed a renewed interest in understanding the delicate interplay of the incident stellar spectrum with the detector pixels.  In EPRV, spectral extraction is \emph{not} turnkey.
+The measurement of Extreme Precision Radial Velocity (EPRV) stands out as particularly susceptible to the vagueries of the spectral extraction process.  The instrumental Radial Velocity (RV) precision needed to detect an Earth-like planet around a Sun-like star amounts to about 1 cm/s, or a mere 10 silicon atoms in a typical spectrograph pixel (cite HPF).  Spectral extraction is \emph{not} turnkey for EPRV.  These precision demands have catalyzed a renewed interest in understanding the delicate interplay of the incident stellar spectrum with the detector pixels.  We seek a holistic view of 2D \'echellogram modeling.
+
+Most 2D \'echellogram data reduction pipelines can be described as procedural: the sequential application of operations with the output of the previous steps serving as intermediate checkpoints and inputs to the next steps.  ``Optimal Extraction'' \citep{1986PASP...98..609H} introduced a separable (1D)Gaussian weighting in the cross-dispersion direction, faithfully incorporating low-but-significant Signal-to-Noise Ratio (SNR) pixels.  \'Echellogram spectral traces generally do not align with the pixel coordinates, often bowing into smile-shaped curves and complicating optimal extraction \citep{2002A&A...385.1095P,2020arXiv200805827P}.
+
+The desire to reach the photon-noise limit motivated a class of algorithms referred to as ``spectro-perfectionism'' \citep{2010PASP..122..248B}, which introduced a subtle mental leap compared to Optimal Extraction.  Rather than treat the PSF as adjacent, indepedent, semi-separable 1D Gaussians in the cross-dispersion direction, \citet{2010PASP..122..248B} allowed arbitraty 2D PSF shapes with unknown morphologies. This arbitrary 2D PSF better resembles the aberrations of a genuine optical system.  Flat-relative optimal extraction \citep{2014A&A...561A..59Z} avoided the need to model the actual PSF by introducing a data-driven method for weighting the pixels and offering some computational advantages in the process.
+
+These existing techniques necessarily make some approximations and have some tradeoffs depending on the science application.  For example, the \citet{2010PASP..122..248B} modeling technique can be thought of as a deconvolution process, and therefore suffers from ringing artifacts in the inferred super-resolution spectrum\footnote{\url{https://hoggresearch.blogspot.com/2019/10/complexifying-optimal-extraction.html}}.
+
+
+
 
 \textbf{The challenge: instrumental defects and imperfections.}
-Many previously ignored physical effects matter at the 10 silicon atoms level.
 
-
-
-\begin{mdframed}
-  \textbf{Previous work: optimal extraction, spectroperfectionism} \par
-  \textcolor{lightgray}{\lipsum[3]}
-\end{mdframed}
-
-\begin{itemize}
-  \item \citet{1986PASP...98..609H}-- Optimal Extraction
-  \item \citet{2002A&A...385.1095P}-- Echelle spectral Reduction
-  \item \citet{2010PASP..122..248B}-- Spectoperfectionism
-  \item \citet{2014A&A...561A..59Z}-- Flat-relative optimal extraction
-  \item This \texttt{Hogg Blog} Blog Post\footnote{\url{https://hoggresearch.blogspot.com/2019/10/complexifying-optimal-extraction.html}}
-  \item \citet{2020arXiv200805827P}-- New!
-\end{itemize}
-
+The essence of 2D spectral extraction is familiar to most practitioners: a monochromatic unresolved point source looks like a free-standing Point Spread Function (PSF), possibly truncated by an entrance slit into a rounded rectangle.  A polychromatic point source convolves this PSF with some line segment
 
 \begin{mdframed}
   \textbf{Common assumptions embedded into current techniques} \par
