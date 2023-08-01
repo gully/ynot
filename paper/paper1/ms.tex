@@ -44,7 +44,7 @@
 
 \section{Introduction}\label{sec:intro}
 
-Virtually all modern insights derived from observational optical spectroscopy first arrive through the lossy, imperfect, and unavoidable process of digitization onto a 2-dimensional (2D) focal plane array detector.  Moore's law has propelled the amount of spectrosopic information we can cram onto these detectors over the last 50 years, with the number of pixels catapulting up to a billion-fold.  Innovative optical designs have made evermore effective use of these pixels with information-rich multi-object, imager slicer, and \`echellogram spectral formats.  The computerized distillation of these spectrograms is generally turnkey.  Facility reduction pipelines provide the humdrum ``extraction'' of raw 2D pixels to familiar 1D extracted spectra, ideally an afterhought in a practioner's journey from observation to scientific results.
+Virtually all modern insights derived from observational optical and near-infrared spectroscopy first arrive through the lossy, imperfect, and unavoidable process of digitization onto a 2-dimensional (2D) focal plane array detector.  Moore's law has propelled the amount of spectrosopic information we can cram onto these detectors over the last 50 years, with the number of pixels catapulting up to a billion-fold.  Innovative optical designs have made evermore effective use of these pixels with information-rich multi-object, imager slicer, and \`echellogram spectral formats.  The computerized distillation of these spectrograms is generally turnkey.  Facility reduction pipelines provide the humdrum ``extraction'' of raw 2D pixels to familiar 1D extracted spectra, ideally an afterhought in a practioner's journey from observation to scientific results.
 
 But increasingly our greatest scientific ambitions are pushing against the limits of how much information we can squeeze out of a given spectrographic observation.  The discovery of other Earths, the redshift of the epoch of reionization, and some of the most important unrealized astronomical discoveries in a generation will occur in the margins of what our most powerful spectrographs can deliver.
 
@@ -70,6 +70,28 @@ In this work, we introduce a new interpretable machine learning framework for th
 
 
 \section{Methodology: Modeling 2D Pixels} \label{secMethod}
+
+\subsection{Autodiff as a central design choice}
+Our method has one uncompromising architectural decision that drives many subsequent design features: we must have automatic differentiation.  Without \emph{autodiff}, the optimization of our spectrogram scene model would be intractable.  The need for autodiff restricts our adoption of programming language to only one of three or four popular Machine Learning (ML) frameworks, since these ML frameworks offer autodiff by construction.  Which of these several ML frameworks to select is a matter of taste--we implemented our method in \texttt{PyTorch}, and anticipate a future prototype may be written in \texttt{JAX}.  Both of these provide partial derivatives of the likelihood function $\mathcal{L}$ with respect to all input parameters of the scene model:
+
+\begin{equation}
+  \frac{\partial{\mathcal{L}}}{\partial{\vec{\theta}}} \label{eq1}
+\end{equation}
+
+\noindent where $\vec{\theta}$ represents the vector of tunable parameters that we will soon encounter, and will occupy the lion's share of this section.  We anticipate the length of $\vec{\theta}$ to number in the tens of thousands of parameters.  Models that can provide Equation \ref{eq1} are called \emph{differentiable} models.  One consequence of requiring our models to be differentiable is that we cannot use any outside libraries: \texttt{astropy}, \texttt{Scipy}, and \texttt{numpy} would break the ability of \texttt{PyTorch} to deliver Equation \ref{eq1}.  The constraint to never-leave-\texttt{PyTorch} makes an already difficult task even more difficult, but possible.
+
+\subsection{Cartesian pixels to spectrum-centric coordinates}
+We seek a map of some spectrograph-centric coordinate system to $(x, y)$ pixels.  We identified two principal spectral coordinates, the dispersion axis $\lambda$ and the cross-dispersion axis designated $s$.  Diffractive optical elements such as \'echelle gratings have the special property of repeating spectral coordinates into adjacent \'echelle orders, $m$, according to the grating equation (cite XX).  The mapping of the physics-based coordinates $(\lambda, s, m)$ to the detector $(x, y)$ Cartesian pixel coordinate system can be abstracted as some enormously complicated vector-valued function $G$:
+
+\begin{equation}
+  G(\lambda, s, m) = (x,y)
+\end{equation}
+
+The choice of how to represent $G$ forms our first key architectural design consideration.  Hypothetically, $G$ could be derived from the spectrograph optical design software, validated with in-lab optical metrology, and adjusted for on-sky performance. Common software already takes $(\lambda, s, m)$ as inputs and returns focal plane coordinates as outputs, so this physically-motivated $G$ appears ideal for a digital twin. But it comes with some challenges and tradeoffs.  First, most optical designs are conducted in a proprietary program such as Zemax\texttrademark, which is generally incompatible with Eq. \ref{eq1}: you cannot take partial derivatives of a Zemax model.  An acceptable alternative could be to rewrite your entire optical model in a differentiable optical modeling framework such as \texttt{morphine} (cite XX) or $\partial{\mathrm{Lux}}$ (cite XX).
+
+For now, we simply treat $G$ as a phenomenological parametric model, and emphasize that the \texttt{ynot} code is written in a future-proof way, such that the $G$ module can be hot-swapped for a physics-based model if/when one becomes available.
+
+
 
 \begin{mdframed}
   \textbf{A mapping of $(x, y)$ pixel coordinates to $(\lambda, s)$ physical coordinates} \par
