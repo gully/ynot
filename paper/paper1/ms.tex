@@ -60,57 +60,22 @@ Brown dwarfs represent a particularly adversarial example for spectral extractio
 
 Even in EPRV, the assumptions in optimal extraction are not actually optimal, and the choices in spectroperfectionism not actually perfect.  Optimal extraction generally treats the cross-dispersion direction as exactly aligned with the detector $y$ axis, a computationally expedient heuristic. The RV bias of optimal extraction grows as the spectral traces tilt and bend farther from the detector pixel alignment.  Straight-but-tilted traces have the effect of polluting adjacent wavelength bins in nearly equal measure and, to first order, lowering the effective spectral resolving power.  Curved \'echelle traces are more insidious.  Here, the smearing of pixels can be expected to proceed with a systematic RV shift, since the shoulder of one spectral line notices more of its pixel neighbor to the left or right, depending on the extent and direction of the spectral trace's curvature.  These seemingly pathological minor biases must make a difference at the 10 Si atom level, but quantifying such complex effects has been elusive in part due to the lack of an end-to-end simulation framework for \'echellograms.
 
-In this work we put forth a framework for a spectrograph \'echellogram \emph{digital twin}.  This term refers to a class of extreme forward modeling--a digital twin should represent all or most of the relevant behaviors of a complex system in a way that can be interrogated to build novel insights.  A digital twin should resemble---as close as possible---the actual state of the system at any given moment, providing simulated data that is indistinguishable from a genuine observation.  An \'echelle spectrograph digital twin therefore builds upon and transcends the notions of scene modeling introduced in \citet{2010PASP..122..248B}, by aspiring to include evermore realistic attributes of the spectrograph's imaging system into the computational machinery.  A digital twin would improve upon these limitations by providing a more physically realistic generative model for the underlying spectrum.
+We seek a \emph{digital twin} spectrograph.  This term refers to a class of extreme forward modeling--a digital twin should represent all or most of the relevant behaviors of a complex system in a way that can be interrogated to build novel insights.  A digital twin should resemble---as close as possible---the actual state of the system at any given moment, providing simulated data that is indistinguishable from a genuine observation.  An \'echelle spectrograph digital twin therefore builds upon and transcends the notions of scene modeling introduced in \citet{2010PASP..122..248B}, by aspiring to include evermore realistic attributes of the spectrograph's imaging system into the computational machinery.  A digital twin would improve upon these limitations by providing a more physically realistic generative model for the underlying spectrum.
 
 The challenge of creating a spectrograph digital twin are enormous.  Generally only a few individual practitioners possesses the requisite knowledge of all the copious ways a spectrograph may be perturbed, and an even smaller fraction of such individuals have the capacity or desire to translate those perturbations into an evaluable forward scene model.  Even if such a model could be written down and codified into a program, evaluating that program is destined to be computational expensive owing to a litany of inner loops of sub-pixel simulations.  Any likelihood function would need to be re\:evaluated as a Bayesian inverse problem to determine the settings of the tunable scene model.  The spectrograph state, sky emission lines, and underlying target star spectrum may have tens of thousands of variables needed to adequately describe the spectrogram.  Tuning tens of thousands of non-linear parameters in this complex forward model would appear hopelessly intractable.  Even if one could somehow linearize some large subset of these parameters via linear algebra \citet{2010PASP..122..248B}, correlated residual structures would inevitably predominate the likelihood calculation, hampering the application of computationally expedient chi-squared algorithms.
 
-Machine learning innovations make digital twins newly possible. First, and most importantly, machine learning frameworks such as PyTorch (cite XX), Tensorflow (cite XX), JAX (cite XX), and others offer end-to-end atomatic differentiation.  This key enabling technology makes it possible to tune an unlimited number of non-linear parameters through the process of ``backwards propagation'', or simply \emph{backprop}.  Second, these frameworks all offer hardware acceleration, including Graphical Processing Units (GPUs) and Tensor Processing Units (TPUs).  These accelerators can yield 60-100$\times$ speedups with no code change.  Third, neural network architectures and/or kernel methods offer a strategy for learning patterns in correlated residual structures, which has the effect of making likelihood functions tolerant to inevitable imperfections in the scene model.  All together these and other modern computational innovations unlock a truly new category of performance
+Machine learning innovations make digital twins newly possible. First, and most importantly, machine learning frameworks such as PyTorch (cite XX), Tensorflow (cite XX), JAX (cite XX), and others offer end-to-end atomatic differentiation.  This key enabling technology makes it possible to tune an unlimited number of non-linear parameters through the process of ``backwards propagation'', or simply \emph{backprop}.  Second, these frameworks all offer seamless integration with hardware accelerators, including Graphical Processing Units (GPUs) and Tensor Processing Units (TPUs), that can yield 60-100$\times$ speedups with no code change.  Third, neural network architectures and/or kernel methods offer a strategy for learning patterns in correlated residual structures, which has the effect of making likelihood functions tolerant to inevitable imperfections in the forward model.  All together these and other modern computational innovations unlock a truly new category of ambition for our data analysis, bringing a full spectrograph forward model into reach.
+
+In this work, we introduce a new interpretable machine learning framework for the analysis of 2D \'echellograms.  We write down and illustrate the the design of the forward model in \S \ref{secMethod}, including a breakdown into sky, target, and background steps.  These steps are generally agnostic to the spectrograph design, and could apply to either a slit-based or fiber-fed instrument with some tuning.  We choose to design our protoype on archival Keck NIRSPEC spectra of faint ultracool brown dwarf spectra, a category already identified as particularly vulnerable to poor optimal extraction.  In \S \ref{results1Synthetic}, we first illustrate the injection and recovery of known signals in synthetic spectrograms, running the synthetic spectra through facility pipelines as if they were bona fide observations.  We then show the results on genuine data in \S \ref{results1Synthetic}, comparing the end-to-end performance of our technique with facility pipelines.  Finally in \S \ref{secDiscuss}, we discuss the tradeoffs of the technique and ways in which it could be extended, and design considerations for other applications.  We discuss economic considerations of applying the framework, weighing the computational cost against the lifecycle cost of traditional spectral acquisition and analysis.  Throughout the work we dispell common criticisms of machine learning as a black box, since our method surgically adopts the interpretable components of the multi-faceted technology while largely eschewing fashionable-albeit-uninterpretable neural network architectures.  We provide the Python implementation as an open source code, \texttt{ynot}.  We intend the framework to serve as community destination for experimentation with digital twins.
 
 
-
-\textbf{The challenge: instrumental defects and imperfections.}
-
-
-\begin{mdframed}
-  \textbf{Common assumptions embedded into current techniques} \par
-  - Single point source\par
-  - Source has continuum\par
-  - Continuum is high SNR\par
-  - Relatively few segments of uninterrupted continuum\par
-  - Trends adequately captured by polynomials\par
-  - Symmetric, Gaussian-like PSF\par
-\end{mdframed}
-
-\begin{mdframed}
-  \textbf{Extreme or unusual spectra break these assumptions} \par
-  - brown dwarfs with low SNR and highly structured/missing spectra\par
-  - emission line spectra (no continuum)\par
-  - binary stars on the same slit\par
-  - extended objects (non-point sources)\par
-  - EPRV\par
-\end{mdframed}
-
-\begin{mdframed}
-  \textbf{Many heuristics designed to cope with departures from these assumptions} \par
-  \textcolor{lightgray}{\lipsum[4]}
-\end{mdframed}
+\section{Methodology: Modeling 2D Pixels} \label{secMethod}
 
 \begin{mdframed}
   \textbf{Philosphy: Each previous spectrum should inform future spectra} \par
   Treat the instrument as a breathing, dynamic system\par
   \textcolor{lightgray}{\lipsum[5]}
 \end{mdframed}
-
-\begin{mdframed}
-  \textbf{The epic hero: autodiff and GPUs, PyTorch, flexible models} \par
-  - Why this is only recently possible\par
-  - Why this may be in some ways easier to reason about than heuristics\par
-  - This work: A new autodiff-aware 2D echellogram modeling framework\par
-  \textcolor{lightgray}{\lipsum[6]}
-\end{mdframed}
-
-
-\section{Methodology: Modeling 2D Pixels}
 
 \begin{mdframed}
   \textbf{A mapping of $(x, y)$ pixel coordinates to $(\lambda, s)$ physical coordinates} \par
@@ -138,7 +103,7 @@ Machine learning innovations make digital twins newly possible. First, and most 
 \end{mdframed}
 
 
-\section{Results 1: Training on Synthetic Data with Injection/Recovery Tests}
+\section{Results 1: Training on Synthetic Data with Injection/Recovery Tests} \label{results1Synthetic}
 
 \begin{mdframed}
   \textbf{Injection/recovery test with noisy data: generating fake data} \par
@@ -189,7 +154,8 @@ Machine learning innovations make digital twins newly possible. First, and most 
 \pagebreak
 \clearpage
 
-\section{Discussion}
+\section{Discussion}\label{secDiscuss}
+
 \begin{mdframed}
   \textbf{The promise for EPRV} \par
   - Simulation of minor RV shifts\par
