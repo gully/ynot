@@ -60,12 +60,11 @@ Brown dwarfs stand out as a particularly adversarial example for spectral extrac
 
 In EPRV, the assumptions in optimal extraction are not actually optimal.  These approaches generally treat the cross-dispersion direction as exactly aligned with the detector $y$ axis, a computationally expedient heuristic. The RV bias of optimal extraction grows as the spectral traces tilt and bend farther from the detector pixel alignment.  Straight-but-tilted traces have the effect of polluting adjacent wavelength bins in nearly equal measure and, to first order, lowering the effective spectral resolving power.  Curved \'echelle traces are more insidious.  Here, the smearing of pixels can be expected to proceed with a systematic RV shift, since the shoulder of one spectral line notices more of its pixel neighbor to the left or right, depending on the extent and direction of the spectral trace's curvature.  These seemingly pathological minor biases must make a difference at the 10 Si atom level, but quantifying such complex effects has been elusive in part due to the lack of an end-to-end simulation framework for \'echellograms.
 
-In this work we put forth a framework for a spectrograph \'echellogram \emph{digital twin}.  A digital twin should represent all or most of the relevant behaviors of a complex system in a way that can be interrogated to build novel insights.  A digital twin should resemble---as close as possible---the actual state of the system at any given moment, providing simulated data that is indistinguishable from a genuine observation.  An \'echelle spectrograph digital twin therefore builds upon but transcends the notions of scene modeling introduced in \citet{2010PASP..122..248B}, by aspiring to include evermore realistic attributes of the spectrograph's imaging system into the computational machinery.  A digital twin would improve upon these limitations by providing a more physically realistic generative model for the underlying spectrum.
+In this work we put forth a framework for a spectrograph \'echellogram \emph{digital twin}.  This term refers to a class of extreme forward modeling--a digital twin should represent all or most of the relevant behaviors of a complex system in a way that can be interrogated to build novel insights.  A digital twin should resemble---as close as possible---the actual state of the system at any given moment, providing simulated data that is indistinguishable from a genuine observation.  An \'echelle spectrograph digital twin therefore builds upon but transcends the notions of scene modeling introduced in \citet{2010PASP..122..248B}, by aspiring to include evermore realistic attributes of the spectrograph's imaging system into the computational machinery.  A digital twin would improve upon these limitations by providing a more physically realistic generative model for the underlying spectrum.
 
 
 \textbf{The challenge: instrumental defects and imperfections.}
 
-The essence of 2D spectral extraction is familiar to most practitioners: a monochromatic unresolved point source looks like a free-standing Point Spread Function (PSF), possibly truncated by an entrance slit into a rounded rectangle.  A polychromatic point source convolves this PSF with some line segment
 
 \begin{mdframed}
   \textbf{Common assumptions embedded into current techniques} \par
@@ -219,6 +218,44 @@ The essence of 2D spectral extraction is familiar to most practitioners: a monoc
   scipy \citep{jones01},
   ipython \citep{perez07},
   pytorch \citep{NEURIPS2019_9015}}
+
+\appendix
+
+\section{Comparison to other frameworks}
+
+Hundreds or possibly thousands of 2D extraction pipelines have been written and rewritten to suit the disparate needs of each unique spectrograph.  Table 1 of \citet{2022PASP..134k4509C} lists 18 \'echelle spectrographs and their data reduction pipelines.  Many but not all of those pipelines are open source.  Here we list a subset of recent open source pipelines for \'echelle spectra reduction.
+
+Few approaches have attempted to combine spectral scene modeling in combination with machine learning techniques.  \citet{2020MNRAS.499.1972X} employed a 2D PSF convolution with neural networks on a demonstration with multi-object spectra from LAMOST.  While promising, the code is not open source and the applications limited to inferring the field distortion, but not extending to subsequent extraction steps.
+
+
+\begin{deluxetable*}{lllll}
+  \tablewidth{0pc}
+  \tablecaption{
+    Open source codes for 2D echelle data reduction
+    \label{tabHeSM}
+  }
+  \tablehead{
+    \colhead{Code}   &
+    \colhead{Instrument} &
+    \colhead{Reference} &
+    \colhead{Language} &
+    \colhead{Note}
+  }
+  \startdata
+  \hline
+  \multicolumn{5}{c}{\'echelle} \\
+  \hline
+  \href{https://github.com/igrins/plp}{PLP} & IGRINS & \citet{2014AdSpR..53.1647S, jaejoonlee15} & Python & \\
+  \href{https://github.com/AWehrhahn/PyReduce}{PyReduce} & HARPS, UVES & \citet{2021AA...646A..32P} & Python & \\
+  \href{https://github.com/njcuk9999/apero-drs}{APERO} & SPIRou & \citep{2022PASP..134k4509C} & Python &\\
+  \hline
+  \multicolumn{5}{c}{Long-slit} \\
+  \hline
+  \href{https://github.com/LSSTDESC/Spectractor}{Spectractor} & CTIO & \citep{2023arXiv230704898N} & Python & Scene Modeling\\
+  \enddata
+  \tablecomments{Some codes are applicable to multiple instruments, and some instruments have multiple codes.}
+\end{deluxetable*}
+
 
 
 
