@@ -1,6 +1,4 @@
-%\documentclass[twocolumn]{emulateapj}% change onecolumn to iop for fancy, iop to onecolumn for manuscript
 \documentclass[twocolumn]{aastex63}
-\bibliographystyle{aasjournal}
 
 \usepackage{graphicx}
 \usepackage[caption=false]{subfig}
@@ -9,22 +7,14 @@
 \usepackage[]{mdframed}
 \usepackage{booktabs}
 
-\usepackage{fontspec}
 \usepackage[T1]{fontenc}
 \usepackage{newtxsf}
-%\setmainfont{Fira Sans Book}[Scale=1.05]
-
-
-\let\pwiflocal=\iffalse \let\pwifjournal=\iffalse
-
-
 
 \shorttitle{Autodiff for 2D echellograms}
 \shortauthors{Gully-Santiago}
-%\bibliographystyle{yahapj}
 
 \begin{document}
-\title{Towards a Spectrograph Digital Twin: Forward Modeling Pixels of 2D Echellograms with Interpretable Machine Learning}
+\title{Towards a Spectrograph Digital Twin: Forward Modeling Pixels of 2D \'Echellograms with Interpretable Machine Learning}
 
 \author{Michael Gully-Santiago}
 \affiliation{University of Texas at Austin Department of Astronomy}
@@ -54,7 +44,7 @@ Most 2D \'echellogram data reduction pipelines can be described as data-driven e
 
 The desire to reach the elusive photon-noise limit motivated a subtle mental leap compared to Optimal Extraction.  \emph{Spectroperfectionism} \citep{2010PASP..122..248B} represents a \emph{scene model}, allowing 2D PSF shapes with possibly asymmetric morphologies, convolved with an underlying super-resolution 1D spectrum with unknown spectral structure.  This 2D PSF better resembles the aberrations of a genuine optical system, albeit with the downsides of high computational cost and the inevitability of introducing artificial ringing artifacts into the deconvolved spectrum\footnote{\url{https://hoggresearch.blogspot.com/2019/10/complexifying-optimal-extraction.html}}.  The spectroperfectionism approach has recently been demonstrated on \'echelle spectra for PRV purposes, achieving comparable performance as optimal extraction for the MINERVA spectrograph \citep{2019PASP..131l4503C}, a promising advance towards EPRV.
 
-These existing techniques generally suit the vast majority of use cases, but necessarily cannot handle all science applications.  For example, spatially resolved binaries with separations less than the spectrograph slit length can be acquired with alignment along a spectrograph entrance slit, nominally offering two spectra for the price of one.  But data acquired in this non-standard manner would break most normal pipelines.  More generally, any extended source, such as a photo-dissociation regions (PDR), Solar System planet surfaces, or resolved circumstellar Keplerian gas disks, possess an admixture of spatial and spectral information convolved together in a way that can make separation and interpretation difficult.  A hypothetical general-purpose spectroscopic scene smodel would be enormously helpful in these contexts, but few such plug-and-play solutions exist.  Spectroastrometry (cite XX) and the recent slitless scene model for CTIO \citep{2023arXiv230704898N} stand out as recent successes.
+These existing techniques generally suit the vast majority of use cases, but necessarily cannot handle all science applications.  For example, spatially resolved binaries with separations less than the spectrograph slit length can be acquired with alignment along a spectrograph entrance slit, nominally offering two spectra for the price of one.  But data acquired in this non-standard manner would break most normal pipelines.  More generally, any extended source, such as a photo-dissociation regions (PDR), Solar System planet surfaces, or resolved circumstellar Keplerian gas disks, possess an admixture of spatial and spectral information convolved together in a way that can make separation and interpretation difficult.  A hypothetical general-purpose spectroscopic scene model would be enormously helpful in these contexts, but few such plug-and-play solutions exist.  Spectroastrometry (cite XX) and the recent slitless scene model for CTIO \citep{2023arXiv230704898N} stand out as recent successes.
 
 Brown dwarfs represent a particularly adversarial example for spectral extraction for two reasons.  Their intrinsically low luminosities mean that all but the closest brown dwarfs have low signal-to-noise ratio at high spectral resolution with existing facilities.  Their ultracool atmospheres contain many molecular absorption bands, in which large swaths of spectra plunge to near zero detectable flux.  The combination of low signal-to-noise ratio and large chunks of missing continuum means that the mere act of identifying a spectral trace becomes difficult, breaking core assumptions in Optimal Extraction.  An even more extreme example---emission line sources---lack a continuum entirely, defying the common pipeline assumption that some detectable signal resides in each pixel sequence.  Heuristics for handling these special cases may exist, but they are often bespoke or require user intervention to guide the process along.
 
