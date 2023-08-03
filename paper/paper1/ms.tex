@@ -74,9 +74,9 @@ Data from a raw spectrogram in its purest form contains $d_{ij}$, where $i$ and 
 
 \begin{equation}
   \boldsymbol{\mathsf{D}} =  \begin{bmatrix}
-    d_{11} & \dots  & d_{1N} \\
-    \vdots & \ddots & \vdots \\
-    d_{M1} & \dots  & d_{MN}
+    d_{11} & \dots  & d_{1N}                       \\
+    \vdots & \ddots & \vdots                       \\
+    d_{M1} & \dots  & d_{MN} \label{eqDenseMatrix}
   \end{bmatrix}
 \end{equation}
 
@@ -84,14 +84,14 @@ Our digital twin seeks to make an interpretable forward model $\boldsymbol{\math
 
 \begin{eqnarray}
   \boldsymbol{\mathsf{R}}(\vec{\theta}) = \boldsymbol{\mathsf{D}} - \boldsymbol{\mathsf{M}}(\vec{\theta}) \\
-  \mathcal{L} = \sum_{i=1}^{N}\sum_{j=1}^{M} \left ( \frac{r_{ij}(\vec{\theta})}{\sigma_{ij}} \right )^2 \label{eqChiSq}
+  \mathcal{L} = -\frac{1}{2} \sum_{i=1}^{N}\sum_{j=1}^{M} \left ( \frac{r_{ij}(\vec{\theta})}{\sigma_{ij}} \right )^2 \label{eqChiSq}
 \end{eqnarray}
 
-where the $\sigma_{ij}$ are the nominally fixed per-pixel uncertainty estimates.  Written in this way, we can see that every pixel can---at least in principle---inform every model parameter.  Equation \ref{eq1} senses what infinitesimal changes to each model parameter would result in a closer match to the data, a lower $\mathcal{L}$ (\emph{i.e.} a better $\chi^2$).  This statement encodes the hope of a digital twin, that by leveraging all of the raw data, our constraints on the state of the spectrograph can be as well-informed as possible.
+where the $\sigma_{ij}$ are the nominally fixed per-pixel uncertainty estimates.  Written in this way, we can see that every pixel can---at least in principle---inform every model parameter.  Equation \ref{eq1} senses what infinitesimal changes to each model parameter would result in a closer match to the data, a higher likelihood $\mathcal{L}$ (\emph{i.e.} a lower $\chi^2$).  This statement encodes the hope of a digital twin, that by leveraging all of the raw data, our constraints on the state of the spectrograph can be as well-informed as possible.
 
 \subsection{Cartesian pixels to spectrum-centric coordinates}
 
-The chief operation of a spectrograph is to disperse overlapping light into different spatial coordinates.  Spectral extraction aims to \emph{undo} that process, seeking a lookup table of $x$ coordinate to wavelength coordinate $\lambda$.  Here we introduce the 2D analog of wavelength calibration, seeking a mapping from $(x, y)$ pixels to some as-yet-unspecified spectrograph-centric coordinate system.  Spectrograms encode two unseen native spectral coordinates, the dispersion axis $\lambda$ and the cross-dispersion axis that we will designate as $s$.  Diffractive optical elements such as \'echelle gratings have an additional special property of repeating spectral coordinates into adjacent \'echelle orders, indexed as $m$, according to the grating equation \citep{2012sdf..book.....J}.  The mapping of the physics-based coordinates $(\lambda, s, m)$ to the detector $(x, y)$ Cartesian pixel coordinate system can be abstracted as some enormously complicated continuous vector-valued function $G$:
+The chief operation of a spectrograph is to disperse overlapping light into different spatial coordinates.  Spectral extraction aims to \emph{undo} that process, seeking a lookup table of $x$ coordinates to wavelength coordinates $\lambda$.  Here we introduce the 2D analog of wavelength calibration, seeking a mapping from $(x, y)$ pixels to some as-yet-unspecified spectrograph-centric coordinate system.  Spectrograms encode two unseen native spectral coordinates, the dispersion axis $\lambda$ and the cross-dispersion axis that we will designate as $s$.  Diffractive optical elements such as \'echelle gratings have an additional special property of repeating spectral coordinates into adjacent \'echelle orders, indexed as $m$, according to the grating equation \citep{2012sdf..book.....J}.  The mapping of the physics-based coordinates $(\lambda, s, m)$ to the detector $(x, y)$ Cartesian pixel coordinate system can be abstracted as some enormously complicated continuous vector-valued function $G$:
 
 \begin{equation}
   G(x,y) = (\lambda, s, m)
@@ -103,7 +103,7 @@ For now, we simply treat $G$ as a phenomenological parametric model, and emphasi
 
 
 \subsection{Representing an \'Echellogram as a vector or sparse matrix}
-In practice, not all pixels inform all parameters.  So our third key architectural design choice is to identify a science target frame as consisting of 5 distinct constituent layers, only some of which touch all pixels. For example, all pixels exhibit a distinct bias and thermal background response.  Only some pixels ``see'' the sky background, and an even smaller subset sense the thin trace of the science target spectrum.  Scattered light and/or internal optical reflections are somewhere in-between, depending on the scale-length and angles of scattering.  Additional binary layers for dead pixels and cosmic ray masks are treated similarly, for a total of 7 distinct physical or instrumental layers that may affect any given pixel.  The model can be re-written as some separable combination of these constituent parts, and in the process we can designate the native coordinate system of each component:
+In practice, not all pixels inform all parameters.  So our third key architectural design choice is to separate physical and instrumental effects as being either being global or local.  Local physical or instrumental effects are much easier to model than global ones, since their computation can be restricted to a subset of all pixels.  We identify a science target frame as consisting of 5 distinct constituent layers, only some of which touch all pixels.  For example, all pixels exhibit a distinct global bias and thermal background response: a changing detector temperature generally affects all pixels.  Conversely, only some pixels ``see'' the sky background, and an even smaller subset sense the thin trace of the science target spectrum.  Scattered light and/or internal optical reflections are somewhere in-between, depending on the scale-length and angles of scattering.  Additional binary layers for dead pixels and cosmic ray masks can be treated similarly, for a total of 7 distinct physical or instrumental layers that may affect any given pixel.  The model can be re-written as some separable combination of these constituent parts, and in the process we can designate the native coordinate system of each component:
 
 \begin{equation}
   \begin{split}
@@ -116,10 +116,22 @@ In practice, not all pixels inform all parameters.  So our third key architectur
   \end{split}
 \end{equation}
 
+The bias and thermal response (\emph{i.e.} dark) terms depend chiefly on the state of the spectrograph's readout electronics and detector temperature, and are usually considered fixed and determined \emph{a-priori}.  Our spectrograph's digital twin forward scene model will allow these terms to take on a parameteric form described in Appendix \ref{secAppendixDataTypes}, amounting to a relatively negligible effect for most applications.  We ignore the scattered light term and other miscellaneous terms for now as well, a fair assumption for many spectrographs and use cases.
 
-For example a spectral point source trace only ``touches'' a few pixels along a line, with large inter-order spacing.  A \emph{sparse matrix} is an ideal representation for stores only non-zero values and assumes zeros for all other entries. impact on the other pixels: flux is localized.   computational reasons it is sometimes useful to store the data as a vector  The flux can be written down in matrix form: $f \equiv X$
+The sky emission and target terms are special.  First, they reside in spectrograph coordinates, which can be converted to spatial pixels with $G^{-1}$.  Second---as emphasized above---their reach is local.  We therefore adopt \emph{sparse matrices} to represent the sky and science target terms. We assign the slightly nonstandard convention of denoting sparse matrices with the un-bolded symbol $\mathsf{M}$, and their counterpart \emph{dense matrices} with the bold version.  A sparse matrix can be pictured as resembling a vector, since it stores only the non-zero elements as a trio of coordinates-and-value, and assumes zeros for all other entries.  We can visualize an example sparse matrix as an augmentation to Equation \ref{eqDenseMatrix}:
+
+\begin{equation}
+  \mathsf{M} =  \begin{bmatrix}
+    (7, 2, m_{72}) \\
+    \vdots         \\
+    (i, j, m_{ij}) \\
+    \vdots         \\
+    (3, 5, m_{35})    \label{eqSparseMatrix}
+  \end{bmatrix}
+\end{equation}
 
 
+\section{How to represent the target spectrum}
 
 \begin{mdframed}
   \textbf{How to represent the target spectrum} \par
@@ -284,7 +296,7 @@ Few approaches have attempted to combine spectral scene modeling in combination 
   \tablecomments{Some codes are applicable to multiple instruments, and some instruments have multiple codes.}
 \end{deluxetable*}
 
-\section{Flat fields, Dark, and Arc Frames} \ref{secAppendixDataTypes}
+\section{Flat fields, Dark, and Arc Frames} \label{secAppendixDataTypes}
 
 Every spectrograph is different, but several common categories of raw data frames can be expected: flat field frames $\boldsymbol{\mathsf{D}}_{\mathrm{flat}}$, dark frames $\boldsymbol{\mathsf{D}}_{\mathrm{dark}}$, wavelength calibration frames $\boldsymbol{\mathsf{D}}_{\mathrm{arc}}$, and science target frames $\boldsymbol{\mathsf{D}}_{\mathrm{targ}}$.  For our purposes, observations of standard-star frames reside in the science target frame category, since they share the same observational configuration.  Most of the main text of this document focused on the modeling of the science target frame, and so we simply dropped any subscripts and referred to this auspicious data as simply $\boldsymbol{\mathsf{D}}$.  All of these calibration frames inform the state of the spectrograph, and can and should be used as such.  The \texttt{ynot} framework provides specialized modeling for these datatypes.
 
