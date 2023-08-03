@@ -87,27 +87,37 @@ Our digital twin seeks to make an interpretable forward model $\boldsymbol{\math
   \mathcal{L} = \sum_{i=1}^{N}\sum_{j=1}^{M} \left ( \frac{r_{ij}(\vec{\theta})}{\sigma_{ij}} \right )^2 \label{eqChiSq}
 \end{eqnarray}
 
-where the $\sigma_{ij}$ are the nominally fixed per-pixel uncertainty estimates.  Written in this way, we can see that every pixel can---at least in principle---inform every model parameter.  Equation \ref{eq1} senses what infinitesimal changes to each model parameter would result in a closer match to the data, a lower $\mathcal{L}$ or better $\chi^2$.  This statement encodes the hope of a digital twin, that by leveraging all of the raw data, our constraints on the state of the spectrograph can be as well-informed as possible.
-
-\subsection{Representing an \'Echellogram as a vector or sparse matrix}
-In practice, not all pixels inform all parameters.  So our first key insight guides a subtle re-ordering of how we break up $\boldsymbol{\mathsf{M}}$ into constituent physical components.  We initally break down the total model into 5 constituent pieces: back
-
-
-
-For example a spectral point source trace only ``touches'' a few pixels along a line, with large inter-order spacing.  A \emph{sparse matrix} is an ideal representation for stores only non-zero values and assumes zeros for all other entries. impact on the other pixels: flux is localized.   computational reasons it is sometimes useful to store the data as a vector  The flux can be written down in matrix form: $f \equiv ()$
+where the $\sigma_{ij}$ are the nominally fixed per-pixel uncertainty estimates.  Written in this way, we can see that every pixel can---at least in principle---inform every model parameter.  Equation \ref{eq1} senses what infinitesimal changes to each model parameter would result in a closer match to the data, a lower $\mathcal{L}$ (\emph{i.e.} a better $\chi^2$).  This statement encodes the hope of a digital twin, that by leveraging all of the raw data, our constraints on the state of the spectrograph can be as well-informed as possible.
 
 \subsection{Cartesian pixels to spectrum-centric coordinates}
 
-We seek a map of $(x, y)$ pixels to some as-yet-unspecified spectrograph-centric coordinate system.  Spectrograms encode two unseen native spectral coordinates, the dispersion axis $\lambda$ and the cross-dispersion axis that we will designate as $s$.  Diffractive optical elements such as \'echelle gratings have an additional special property of repeating spectral coordinates into adjacent \'echelle orders, indexed as $m$, according to the grating equation \citep{2012sdf..book.....J}.  The mapping of the physics-based coordinates $(\lambda, s, m)$ to the detector $(x, y)$ Cartesian pixel coordinate system can be abstracted as some enormously complicated vector-valued function $G$:
+The chief operation of a spectrograph is to disperse overlapping light into different spatial coordinates.  Spectral extraction aims to \emph{undo} that process, seeking a lookup table of $x$ coordinate to wavelength coordinate $\lambda$.  Here we introduce the 2D analog of wavelength calibration, seeking a mapping from $(x, y)$ pixels to some as-yet-unspecified spectrograph-centric coordinate system.  Spectrograms encode two unseen native spectral coordinates, the dispersion axis $\lambda$ and the cross-dispersion axis that we will designate as $s$.  Diffractive optical elements such as \'echelle gratings have an additional special property of repeating spectral coordinates into adjacent \'echelle orders, indexed as $m$, according to the grating equation \citep{2012sdf..book.....J}.  The mapping of the physics-based coordinates $(\lambda, s, m)$ to the detector $(x, y)$ Cartesian pixel coordinate system can be abstracted as some enormously complicated continuous vector-valued function $G$:
 
 \begin{equation}
   G(x,y) = (\lambda, s, m)
 \end{equation}
 
-The choice of how to represent $G$ forms our first key architectural design consideration.  Hypothetically, $G$ could be derived from the spectrograph optical design software, validated with in-lab optical metrology, and adjusted for on-sky performance. Common software already takes $(\lambda, s, m)$ as inputs and returns focal plane coordinates as outputs, so this physically-motivated $G$ appears ideal for a digital twin. But it comes with some challenges and tradeoffs.  First, most optical designs are conducted in a proprietary program such as Zemax\texttrademark, which is generally incompatible with Eq. \ref{eq1}: you cannot take partial derivatives of a Zemax model.  An acceptable alternative could be to rewrite your entire optical model in a differentiable optical modeling framework such as \texttt{morphine} \citep{2021ApJ...907...40P} or $\partial{\mathrm{Lux}}$ (Desdoigts et al. \emph{in prep}).
+Nature does not know about $G$, but instead its similarly complicated inverse: $G^{-1}(\lambda, s, m) = (x,y)$.  The choice of how to obtain $G$ (or its inverse) forms our second key architectural design consideration (after requiring autodiff).  Hypothetically, $G$ could be derived from the spectrograph's optical design software, validated with in-lab optical metrology, and adjusted for on-sky performance. Common software already takes $(\lambda, s, m)$ as inputs and returns focal plane coordinates as outputs, so this physically-motivated $G^{-1}$ appears ideal for a digital twin. But optical modeling comes with some challenges and tradeoffs.  First, most optical designs are conducted in a proprietary program such as Zemax\texttrademark, which is generally incompatible with Eq. \ref{eq1}: you cannot take partial derivatives of a Zemax model.  An suitable alternative could be to rewrite your entire optical model in a differentiable optical modeling framework such as \texttt{morphine} \citep{2021ApJ...907...40P} or $\partial{\mathrm{Lux}}$ (Desdoigts et al. \emph{in prep}).
 
-For now, we simply treat $G$ as a phenomenological parametric model, and emphasize that the \texttt{ynot} code is written in a future-proof way, such that the $G$ module can be hot-swapped for a physics-based model if/when one becomes available.
+For now, we simply treat $G$ as a phenomenological parametric model, and emphasize that the \texttt{ynot} code is written in a future-proof way, such that the $G$ module can be hot-swapped with a drop-in-replacement physics-based model if/when one becomes available.
 
+
+\subsection{Representing an \'Echellogram as a vector or sparse matrix}
+In practice, not all pixels inform all parameters.  So our third key architectural design choice is to identify a science target frame as consisting of 5 distinct constituent layers, only some of which touch all pixels. For example, all pixels exhibit a distinct bias and thermal background response.  Only some pixels ``see'' the sky background, and an even smaller subset sense the thin trace of the science target spectrum.  Scattered light and/or internal optical reflections are somewhere in-between, depending on the scale-length and angles of scattering.  Additional binary layers for dead pixels and cosmic ray masks are treated similarly, for a total of 7 distinct physical or instrumental layers that may affect any given pixel.  The model can be re-written as some separable combination of these constituent parts, and in the process we can designate the native coordinate system of each component:
+
+\begin{equation}
+  \begin{split}
+    \boldsymbol{\mathsf{M}}(\vec{\theta}) = \; &\boldsymbol{\mathsf{M}}_{\mathrm{b}}(x,y) \quad \textcolor{lightgray}{\text{\emph{bias term}}}\\
+    + \;&\boldsymbol{\mathsf{M}}_{\mathrm{t}}(x,y) \quad \textcolor{lightgray}{\text{\emph{thermal response}}}\\
+    + \;&\mathsf{M}_\mathrm{sky}(\lambda, s, m) \quad \textcolor{lightgray}{\text{\emph{sky emission}}}\\
+    + \;&\mathsf{M}_\mathrm{targ}(\lambda, s, m) \quad \textcolor{lightgray}{\text{\emph{science target}}}\\
+    + \;&\textcolor{gray}{\texttt{[scattered light term]}} \\
+    + \;&\dots \quad \textcolor{lightgray}{\text{\emph{miscellaneous}}}
+  \end{split}
+\end{equation}
+
+
+For example a spectral point source trace only ``touches'' a few pixels along a line, with large inter-order spacing.  A \emph{sparse matrix} is an ideal representation for stores only non-zero values and assumes zeros for all other entries. impact on the other pixels: flux is localized.   computational reasons it is sometimes useful to store the data as a vector  The flux can be written down in matrix form: $f \equiv X$
 
 
 
