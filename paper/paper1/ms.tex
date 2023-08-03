@@ -102,8 +102,8 @@ Nature does not know about $G$, but instead its similarly complicated inverse: $
 For now, we simply treat $G$ as a phenomenological parametric model, and emphasize that the \texttt{ynot} code is written in a future-proof way, such that the $G$ module can be hot-swapped with a drop-in-replacement physics-based model if/when one becomes available.
 
 
-\subsection{Representing an \'Echellogram as a vector or sparse matrix}
-In practice, not all pixels inform all parameters.  So our third key architectural design choice is to separate physical and instrumental effects as being either being global or local.  Local physical or instrumental effects are much easier to model than global ones, since their computation can be restricted to a subset of all pixels.  We identify a science target frame as consisting of 5 distinct constituent layers, only some of which touch all pixels.  For example, all pixels exhibit a distinct global bias and thermal background response: a changing detector temperature generally affects all pixels.  Conversely, only some pixels ``see'' the sky background, and an even smaller subset sense the thin trace of the science target spectrum.  Scattered light and/or internal optical reflections are somewhere in-between, depending on the scale-length and angles of scattering.  Additional binary layers for dead pixels and cosmic ray masks can be treated similarly, for a total of 7 distinct physical or instrumental layers that may affect any given pixel.  The model can be re-written as some separable combination of these constituent parts, and in the process we can designate the native coordinate system of each component:
+\subsection{Breaking the scene into local and global components}
+In practice, not all pixels inform all parameters.  So our third key architectural design choice is to separate physical and instrumental effects as being either global or local.  Local physical or instrumental effects are much easier to model than global ones, since their computation can be restricted to a subset of all pixels.  We identify a science target frame as consisting of 5 distinct constituent layers, only some of which touch all pixels.  For example, all pixels exhibit a distinct global bias and thermal background response: a changing detector temperature generally affects all pixels.  Conversely, only some pixels ``see'' the sky background, and an even smaller subset sense the thin trace of the science target spectrum.  Scattered light and/or internal optical reflections are somewhere in-between, depending on the scale-length and angles of scattering.  Additional binary layers for dead pixels and cosmic ray masks can be treated similarly, for a total of 7 distinct physical or instrumental layers that may affect any given pixel.  The model can be re-written as some separable combination of these constituent parts, and in the process we can designate the native coordinate system of each component:
 
 \begin{equation}
   \begin{split}
@@ -130,8 +130,21 @@ The sky emission and target terms are special.  First, they reside in spectrogra
   \end{bmatrix}
 \end{equation}
 
-
 \section{How to represent the target spectrum}
+Writing down a model for the science target spectrum represents both the chief science objective, and nearly circular reasoning. We need to know the underlying spectrum of the target star in order to fully model the scene, but if we had perfect knowledge of the target star we would not need to model the scene, nor take any data in the first place.  Instead we have to infer the spectrum.  The right choice depends strongly on one's science goals, and there does not exist a single best choice for all use cases.  Here we narrate three pathways.
+
+We could simply have a non-parameteric super-resolution highly flexible model for the underlying spectrum that gets iteratively updated and solved for.  This strategy works adequately \citep{2010PASP..122..248B}.
+
+Relatedly, we could employ a differentiable tunable model, such as \texttt{wobble} \citep{2019AJ....158..164B} or \emph{blas\'e} \citep{2022ApJ...941..200G}.
+
+Finally, if the end-goal of the science analysis is to fit a tunable model to the spectrum, the data-model comparison could simply take place directly in the 2D \'echellogram pixels, instead of ever acquiring the 1D extracted spectrum as an intermediate data product.
+
+We choose a combination of the first two options, most resembling a crossover of  \citet{2010PASP..122..248B} to \citet{2019AJ....158..164B}.  For the rest of the paper we will simply assume the target is a stellar point source, though the technique is relatively agnostic to the astrophysics of the source properties.  We write down the parameterized stellar spectrum as a contiguous string of adjacent and overlapping 2D Gaussians, each located at wavelength coordinate $\lambda_k$.
+
+\begin{equation}
+  f_k(\lambda_k) = A_k e^{-\left (\frac{\lambda - \lambda_k}{\epsilon} \right )^2}
+\end{equation}
+
 
 \begin{mdframed}
   \textbf{How to represent the target spectrum} \par
