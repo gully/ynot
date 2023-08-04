@@ -16,7 +16,9 @@ The $y_0$ framework aspires to address these problems through the creation of a 
 
 ## Project History, status, and how to get involved
 
-The baseline PyTorch code and project scaffolding is based off of Ian Czekala's [MPoL project](https://github.com/iancze/MPoL). The project started in the early months of the COVID pandemic as a proof-of-concept demo, and was dormant as we built [blasé](https://github.com/gully/blase), which enables [interpretable machine learning for 1D extracted spectra](https://ui.adsabs.harvard.edu/abs/2022ApJ...941..200G/abstract).
+The baseline PyTorch code and project scaffolding is based off of Ian Czekala's [MPoL project](https://github.com/iancze/MPoL). The project started in the early months of the COVID pandemic as a proof-of-concept demo, and was dormant as we built [blasé](https://github.com/gully/blase), which enables interpretable machine learning for 1D extracted spectra[^2].
+
+[^2]: https://ui.adsabs.harvard.edu/abs/2022ApJ...941..200G/abstract
 
 As of July 2023, we are returning to $y_0$ to make it a broadly applicable tool for a wide variety of scientific use cases. If that sounds good to you, join our open source project! We welcome contibutions from a wide range of experience levels.
 
