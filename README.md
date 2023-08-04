@@ -25,7 +25,7 @@ As of July 2023, we are returning to $y_0$ to make it a broadly applicable tool 
 
 To get involved, please introduce yourself on our [discussions](https://github.com/gully/ynot/discussions/22) page, or open an [Issue](https://github.com/gully/ynot/issues) describing your interest, or just [contact me](http://gully.github.io/) directly.
 
-<iframe width="560" height="315" src="https://www.youtube.com/embed/mXToHEmq6hM" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen></iframe>
+[![ynot with tensorboard](http://img.youtube.com/vi/mXToHEmq6hM/0.jpg)](http://www.youtube.com/watch?v=mXToHEmq6hM "ynot training demo")
 
 ---
 
