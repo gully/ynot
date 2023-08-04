@@ -101,7 +101,9 @@ class FPADataset(Dataset):
 
     def load_bad_pixel_mask(self):
         """Load the global bad pixel mask"""
-        bad_pixel_mask_path = "../../zoja/ccdproc/reduced/static/bad_pixel_mask.fits"
+        bad_pixel_mask_path = (
+            "/home/gully/GitHub/zoja/ccdproc/reduced/static/bad_pixel_mask.fits"
+        )
         bpm_data = fits.open(bad_pixel_mask_path)[0].data.astype(np.bool)
         return torch.tensor(bpm_data)
 

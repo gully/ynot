@@ -2,6 +2,7 @@
 
 #### An interpretable machine learning approach to échellogram forward modeling.
 
+![PyTorch](https://img.shields.io/badge/PyTorch-%23EE4C2C.svg?style=for-the-badge&logo=PyTorch&logoColor=white)
 [![Documentation Status](https://readthedocs.org/projects/ynot/badge/?version=latest)](https://ynot.readthedocs.io/en/latest/?badge=latest)
 
 ## Rationale: A spectrograph's digital twin
@@ -23,6 +24,8 @@ The baseline PyTorch code and project scaffolding is based off of Ian Czekala's 
 As of July 2023, we are returning to $y_0$ to make it a broadly applicable tool for a wide variety of scientific use cases. If that sounds good to you, join our open source project! We welcome contibutions from a wide range of experience levels.
 
 To get involved, please introduce yourself on our [discussions](https://github.com/gully/ynot/discussions/22) page, or open an [Issue](https://github.com/gully/ynot/issues) describing your interest, or just [contact me](http://gully.github.io/) directly.
+
+<iframe width="560" height="315" src="https://www.youtube.com/embed/mXToHEmq6hM" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen></iframe>
 
 ---
 
