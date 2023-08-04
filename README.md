@@ -25,7 +25,7 @@ A typical modern astronomical echellogram has at least $1000 \times 1000$ pixels
 2. Has hardware acceleration with NVIDIA GPUs
 3. (Optionally) can use sparse matrices for target traces and sky background
 
-## Demo on Keck NIRSPEC data
+## v0.1 demo on Keck NIRSPEC data
 
 Our project is funded in part through NASA Astrophysics Data Analysis Program (ADAP) grant [80NSSC21K0650](https://www.highergov.com/grant/80NSSC21K0650/) to improve archival data from the [Keck NIRSPEC](https://www2.keck.hawaii.edu/inst/nirspec/) spectrograph. We are encouraged to see that version 0.1 of the code already delivers improved performance on an example brown dwarf spectrum in our first pass scene model. Below is a [tensorboard](https://www.tensorflow.org/tensorboard) screencap that shows how the PyTorch machine learning training proceeded, giving lower training loss and better 2D spectral reconstruction. This training process took a few minutes on my NVIDIA RTX2070 GPU. We think we can improve both the precision and speed of the `ynot` code in upcoming versions.
 
