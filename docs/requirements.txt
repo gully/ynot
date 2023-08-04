@@ -6,3 +6,4 @@ kornia
 pandas
 ccdproc
 scikit-learn
+pydata-sphinx-theme
