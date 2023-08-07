@@ -18,7 +18,7 @@ sys.path.insert(0, os.path.abspath("../src/"))
 # -- Project information -----------------------------------------------------
 
 project = "ynot"
-copyright = "2020, gully"
+copyright = "2023, gully"
 author = "gully"
 
 # The full version, including alpha/beta/rc tags
@@ -37,10 +37,20 @@ extensions = [
     "sphinx.ext.napoleon",
     "sphinx.ext.todo",
     "sphinx.ext.mathjax",
+    "nbsphinx",
+    "sphinx_gallery.load_style",
     "sphinx.ext.githubpages",
     "sphinx.ext.ifconfig",
     "sphinx.ext.viewcode",
 ]
+
+nbsphinx_thumbnails = {
+    "tutorials/demo1": "_static/ynot_logo_0p1.png",
+}
+
+nbsphinx_allow_errors = True
+nbsphinx_execute = "never"
+pygments_style = "vs"
 
 # Add any paths that contain templates here, relative to this directory.
 templates_path = ["_templates"]
@@ -59,6 +69,7 @@ exclude_patterns = ["_build", "Thumbs.db", ".DS_Store"]
 #
 # html_theme = "pyramid"
 html_theme = "pydata_sphinx_theme"
+html_logo = "_static/ynot_logo_0p1.png"
 
 html_theme_options = {
     "icon_links": [

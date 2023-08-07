@@ -7,3 +7,7 @@ pandas
 ccdproc
 scikit-learn
 pydata-sphinx-theme
+nbsphinx
+tqdm
+ipython
+sphinx-gallery
