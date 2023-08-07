@@ -80,12 +80,13 @@ html_theme_options = {
             "url": "https://megayear.github.io",
             "icon": "https://upload.wikimedia.org/wikipedia/commons/c/c0/UT%26T_text_logo.svg",
             "type": "url",
-        },
-
-
-        
-   ]
+        }],
+        "footer_start": ["copyright"],
+        "secondary_sidebar_items": ["page-toc"],
+        "navbar_start": ["navbar-logo", "last-updated.html"],
+        "footer_end":  []
 }
+
 
 # Add any paths that contain custom static files (such as style sheets) here,
 # relative to this directory. They are copied after the builtin static files,
