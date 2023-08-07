@@ -1,4 +1,4 @@
-![ynot](docs/_static/ynot_logo_0p1.svg)
+<center><img src="https://raw.githubusercontent.com/gully/ynot/master/docs/_static/ynot_logo_0p1.svg" width="150"></center>
 
 # `ynot`
 #### _An interpretable machine learning approach to échellogram forward modeling_
