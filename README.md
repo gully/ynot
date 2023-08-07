@@ -1,4 +1,4 @@
-![ynot](docs/_static/ynot_logo_0p1.svg | width=100)
+![ynot](docs/_static/ynot_logo_0p1.svg)
 
 # `ynot`
 #### _An interpretable machine learning approach to échellogram forward modeling_
