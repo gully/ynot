@@ -3,8 +3,10 @@
    You can adapt this file completely to your liking, but it should at least
    contain the root `toctree` directive.
 
-:math:`y_0`
-===========
+.. figure:: _static/ynot_logo_0p1.svg
+   :align: center
+   :width: 20%
+
 
 The `ynot` project aims to improve the astronomical echelle spectroscopy data reduction process through three key ideas:
 
