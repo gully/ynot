@@ -60,6 +60,36 @@ exclude_patterns = ["_build", "Thumbs.db", ".DS_Store"]
 # html_theme = "pyramid"
 html_theme = "pydata_sphinx_theme"
 
+html_theme_options = {
+    "icon_links": [
+        {
+            # Label for this link
+            "name": "GitHub",
+            # URL where the link will redirect
+            "url": "https://github.com/gully/ynot",  # required
+            # Icon class (if "type": "fontawesome"), or path to local image (if "type": "local")
+            "icon": "fa-brands fa-square-github",
+            # The type of image to be used (see below for details)
+            "type": "fontawesome",
+        },
+        {
+            "name": "PyTorch",
+            "url": "https://pytorch.org",
+            "icon": "https://upload.wikimedia.org/wikipedia/commons/1/10/PyTorch_logo_icon.svg",
+            "type": "url",
+        },
+        {
+            "name": "megayear",
+            "url": "https://megayear.github.io",
+            "icon": "https://upload.wikimedia.org/wikipedia/commons/c/c0/UT%26T_text_logo.svg",
+            "type": "url",
+        },
+
+
+        
+   ]
+}
+
 ## We will customize some theme options here:
 
 # Add any paths that contain custom static files (such as style sheets) here,
