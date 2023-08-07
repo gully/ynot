@@ -95,7 +95,7 @@ html_theme = "pydata_sphinx_theme"
 html_logo = "_static/ynot_logo_0p1.png"
 
 nbsphinx_thumbnails = {
-    "tutorials/demo1": "_static/ynot_logo_0p1.png",
+    "tutorials/tutorial01": "_static/ynot_logo_0p1.png",
 }
 nbsphinx_allow_errors = True
 nbsphinx_execute = "never"

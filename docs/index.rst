@@ -7,6 +7,8 @@
    :align: center
    :width: 20%
 
+ynot
+====
 
 The `ynot` project aims to improve the astronomical echelle spectroscopy data reduction process through three key ideas:
 
