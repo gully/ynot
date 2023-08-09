@@ -152,6 +152,15 @@ The sky emission and target terms are special.  First, they reside in spectrogra
   \label{fig:sceneModelSingleOrder}
 \end{figure*}
 
+
+\begin{figure*}[t!]
+  \centering
+  \includegraphics[width=0.98\linewidth]{figures/scene_coordinates.png}
+  \caption{Scene Coordinates. \lipsum[2]}
+  \label{fig:sceneCoordinates}
+\end{figure*}
+
+
 Writing down a model for the science target spectrum represents both the chief science objective, and nearly circular reasoning. We need to know the underlying spectrum of the target star in order to fully model the scene, but if we had perfect knowledge of the target star we would not need to model the scene, nor take any data in the first place.  Instead we have to infer the spectrum.  The right choice depends strongly on one's science goals, and there does not exist a single best choice for all use cases.  Here we narrate three pathways.
 
 We could simply have a non-parameteric super-resolution highly flexible model for the underlying spectrum that gets iteratively updated and solved for.  This strategy works adequately \citep{2010PASP..122..248B}.
