@@ -89,7 +89,16 @@ Our digital twin seeks to make an interpretable forward model $\boldsymbol{\math
 
 where the $\sigma_{ij}$ are the nominally fixed per-pixel uncertainty estimates.  Written in this way, we can see that every pixel can---at least in principle---inform every model parameter.  Equation \ref{eq1} senses what infinitesimal changes to each model parameter would result in a closer match to the data, a higher likelihood $\mathcal{L}$ (\emph{i.e.} a lower $\chi^2$).  This statement encodes the hope of a digital twin, that by leveraging all of the raw data, our constraints on the state of the spectrograph can be as well-informed as possible.
 
+\begin{figure*}[t]
+  \centering
+  \includegraphics[width=0.98\linewidth]{figures/spectral_trace_v0p1rot.png}
+  \caption{Spectral trace geometry for curved \'echellograms.  A spectral trace that has the dispersion axis $\hat{\boldsymbol{\lambda}}$ perfectly aligned with the pixel $\hat{\boldsymbol{x}}$ row vector (``column aligned'') can safely undergo ``optimal extraction''.  But as the trace curves, the cross-dispersion axis $\hat{\boldsymbol{s}}$ tilts away from the verical columns $\hat{\boldsymbol{y}}$.  An ideal extraction box may be aligned with the cross-dispersion axis, or ``slit aligned'' for slit-based instrument.  The right choice for extraction becomes complicated in this scenario and forms the basis of this paper.}
+  \label{fig:traceSchematic}
+\end{figure*}
+
 \subsection{Cartesian pixels to spectrum-centric coordinates}
+
+
 
 The chief operation of a spectrograph is to disperse overlapping light into different spatial coordinates.  Spectral extraction aims to \emph{undo} that process, seeking a lookup table of $x$ coordinates to wavelength coordinates $\lambda$.  Here we introduce the 2D analog of wavelength calibration, seeking a mapping from $(x, y)$ pixels to some as-yet-unspecified spectrograph-centric coordinate system.  Spectrograms encode two unseen native spectral coordinates, the dispersion axis $\lambda$ and the cross-dispersion axis that we will designate as $s$.  Diffractive optical elements such as \'echelle gratings have an additional special property of repeating spectral coordinates into adjacent \'echelle orders, indexed as $m$, according to the grating equation \citep{2012sdf..book.....J}.  The mapping of the physics-based coordinates $(\lambda, s, m)$ to the detector $(x, y)$ Cartesian pixel coordinate system can be abstracted as some enormously complicated continuous vector-valued function $G$:
 
