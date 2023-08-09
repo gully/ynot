@@ -144,6 +144,14 @@ The sky emission and target terms are special.  First, they reside in spectrogra
 \end{equation}
 
 \section{How to represent the target spectrum}
+
+\begin{figure*}[t!]
+  \centering
+  \includegraphics[width=0.98\linewidth]{figures/scene_model_single_order.png}
+  \caption{Scene model for a portion of a Keck NIRSPEC \'echellogram centered on a single spectral order.  The sky lines, \'echelle order boundaries, and stellar point source spectral trace appear as familiar features.  Skyline emission lines exhibit the greatest residual amplitudes.  The residual also exhibits minor structures near the photon noise limit, such as detector pattern noise.  Vignetting can be seen at the right edge and upper left corner.}
+  \label{fig:sceneModelSingleOrder}
+\end{figure*}
+
 Writing down a model for the science target spectrum represents both the chief science objective, and nearly circular reasoning. We need to know the underlying spectrum of the target star in order to fully model the scene, but if we had perfect knowledge of the target star we would not need to model the scene, nor take any data in the first place.  Instead we have to infer the spectrum.  The right choice depends strongly on one's science goals, and there does not exist a single best choice for all use cases.  Here we narrate three pathways.
 
 We could simply have a non-parameteric super-resolution highly flexible model for the underlying spectrum that gets iteratively updated and solved for.  This strategy works adequately \citep{2010PASP..122..248B}.
