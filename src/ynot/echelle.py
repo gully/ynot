@@ -319,8 +319,17 @@ class Echellogram(nn.Module):
 
     def get_skyline_wavelengths(self):
         """Get the wavelengths of bright sky lines (e.g. OH)"""
-        df = pd.read_csv(
-            "/home/gully/GitHub/ynot/data/ir_ohlines.dat",
+        fn = "/home/gully/GitHub/ynot/data/ir_ohlines.dat"
+        fn_web = 'https://raw.githubusercontent.com/Keck-DataReductionPipelines/NIRSPEC-Data-Reduction-Pipeline/4bf6db52771bdd7a3f4ec80a3418abcc92b2cf43/ir_ohlines.dat'
+        try:
+            df = pd.read_csv(
+            fn,
+            names=["wl", "rel_flux"],
+            delim_whitespace=True,
+        )
+        except:
+            df = pd.read_csv(
+            fn_web,
             names=["wl", "rel_flux"],
             delim_whitespace=True,
         )

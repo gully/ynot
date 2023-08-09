@@ -24,7 +24,7 @@ We invite you to engage with us at our `GitHub page
    :caption: Contents:
 
     Installation <install>
-    Application Programming Interface <api>
+    API <api>
     Tutorials <tutorials/index>
 
 Currently this project requires NVIDIA GPUs.  To check if you have a GPU available:
