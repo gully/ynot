@@ -47,7 +47,17 @@ These existing techniques generally suit the vast majority of use cases, but nec
 
 Brown dwarfs represent a particularly adversarial example for spectral extraction for two reasons.  Their intrinsically low luminosities mean that all but the closest brown dwarfs have low signal-to-noise ratio at high spectral resolution with existing facilities.  Their ultracool atmospheres contain many molecular absorption bands, in which large swaths of spectra plunge to near zero detectable flux.  The combination of low signal-to-noise ratio and large chunks of missing continuum means that the mere act of identifying a spectral trace becomes difficult, breaking core assumptions in Optimal Extraction.  An even more extreme example---emission line sources---lack a continuum entirely, defying the common pipeline assumption that some detectable signal resides in each pixel sequence.  Heuristics for handling these special cases may exist, but they are often bespoke or require user intervention to guide the process along.
 
-Even in EPRV, the assumptions in optimal extraction are not actually optimal, and the choices in spectroperfectionism not actually perfect.  Optimal extraction generally treats the cross-dispersion direction as exactly aligned with the detector $y$ axis, a computationally expedient heuristic. The RV bias of optimal extraction grows as the spectral traces tilt and bend farther from the detector pixel alignment.  Straight-but-tilted traces have the effect of polluting adjacent wavelength bins in nearly equal measure and, to first order, lowering the effective spectral resolving power.  Curved \'echelle traces are more insidious.  Here, the smearing of pixels can be expected to proceed with a systematic RV shift, since the shoulder of one spectral line notices more of its pixel neighbor to the left or right, depending on the extent and direction of the spectral trace's curvature.  These seemingly pathological minor biases must make a difference at the 10 Si atom level, but quantifying such complex effects has been elusive in part due to the lack of an end-to-end simulation framework for \'echellograms.
+\begin{figure*}[t!]
+  \centering
+  \includegraphics[width=0.98\linewidth]{figures/spectral_trace_v0p1rot.png}
+  \caption{Spectral trace geometry for curved \'echellograms.  A spectral trace that has the dispersion axis $\hat{\boldsymbol{\lambda}}$ perfectly aligned with the pixel $\hat{\boldsymbol{x}}$ row vector (``column aligned'') can safely undergo ``optimal extraction'' \citep{1986PASP...98..609H}.  But as the trace curves, the cross-dispersion axis $\hat{\boldsymbol{s}}$ tilts away from the verical columns $\hat{\boldsymbol{y}}$.  An ideal extraction box may be aligned with the cross-dispersion axis (``slit aligned'' for a slit-based instrument).  The right choice for extraction becomes complicated in this scenario and forms the basis of this paper.}
+  \label{fig:traceSchematic}
+\end{figure*}
+
+
+Even in EPRV, the assumptions in optimal extraction are not actually optimal, and the choices in spectroperfectionism not actually perfect.  Optimal extraction generally treats the cross-dispersion direction as exactly aligned with the detector $y$ axis as illustrated in Figure \ref{fig:traceSchematic}. This computationally expedient heuristic could be expected to introduce small RV biases that grow as the spectral traces tilt and bend farther from the detector pixel alignment.  As seen in the right side of Figure \ref{fig:traceSchematic}, the cross-dispersion axis (normal to the dispersion direction), tilts away from the columns. Straight-line tilted traces have the effect of polluting adjacent wavelength bins in nearly equal measure and, to first order, lowering the effective spectral resolving power.  Ideally we would extract along the cross-dispersion axis (``slit-aligned''), but doing so may force us to re-grid the spectrum via intepolation, a loss mechanism that loses the native pixel uncertainties by correlating adjacent pixels.
+
+Curved \'echelle traces are even more insidious.  The smearing of pixels can be expected to proceed with a systematic RV shift, since the shoulder of one spectral line notices slightly more of its pixel neighbor to the left or right, depending on the extent and direction of the spectral trace's curvature.  These seemingly pathological minor biases must make a difference at the 10 Si atom level, but quantifying such complex effects has been elusive in part due to the lack of an end-to-end simulation framework for \'echellograms.
 
 We seek a spectrograph's \emph{digital twin}.  This term refers to a class of extreme forward modeling--a digital twin should represent all or most of the relevant behaviors of a complex system in a way that can be interrogated to build novel insights.  A digital twin should resemble---as close as possible---the actual state of the system at any given moment, providing simulated data that is indistinguishable from a genuine observation.  An \'echelle spectrograph digital twin therefore builds upon and transcends the notions of scene modeling introduced in \citet{2010PASP..122..248B}, by aspiring to include evermore realistic attributes of the spectrograph's imaging system into the computational machinery.  A digital twin would improve upon these limitations by providing a more physically realistic generative model for the underlying spectrum.
 
@@ -69,6 +79,7 @@ Our method has one uncompromising architectural decision that drives many subseq
 
 \noindent where $\vec{\theta}$ represents the vector of tunable parameters that we will soon encounter, and will occupy the lion's share of this section.  We anticipate the length of $\vec{\theta}$ to number in the tens of thousands of parameters.  Models that can provide Equation \ref{eq1} are called \emph{differentiable}.  One consequence of requiring our models to be differentiable is that we cannot use any outside libraries: \texttt{astropy}, \texttt{Scipy}, and \texttt{numpy} would break the ability of \texttt{PyTorch} to deliver Equation \ref{eq1}.  The constraint to never-leave-\texttt{PyTorch} makes an already difficult task even more difficult, but possible.
 
+
 \subsection{The Shape of Data and Likelihood}
 Data from a raw spectrogram in its purest form contains $d_{ij}$, where $i$ and $j$ are the fixed pixel indices in the $x$ and $y$ directions respectively, and $d$ is the digitized datum value in analog-to-digital units (ADUs).  The full frame image of an \'echellogram is stored as an $(N \times M)$ matrix, which we will call $\boldsymbol{\mathsf{D}}$ to emphasize that this object represents \emph{data}:
 
@@ -88,13 +99,6 @@ Our digital twin seeks to make an interpretable forward model $\boldsymbol{\math
 \end{eqnarray}
 
 where the $\sigma_{ij}$ are the nominally fixed per-pixel uncertainty estimates.  Written in this way, we can see that every pixel can---at least in principle---inform every model parameter.  Equation \ref{eq1} senses what infinitesimal changes to each model parameter would result in a closer match to the data, a higher likelihood $\mathcal{L}$ (\emph{i.e.} a lower $\chi^2$).  This statement encodes the hope of a digital twin, that by leveraging all of the raw data, our constraints on the state of the spectrograph can be as well-informed as possible.
-
-\begin{figure*}[t]
-  \centering
-  \includegraphics[width=0.98\linewidth]{figures/spectral_trace_v0p1rot.png}
-  \caption{Spectral trace geometry for curved \'echellograms.  A spectral trace that has the dispersion axis $\hat{\boldsymbol{\lambda}}$ perfectly aligned with the pixel $\hat{\boldsymbol{x}}$ row vector (``column aligned'') can safely undergo ``optimal extraction''.  But as the trace curves, the cross-dispersion axis $\hat{\boldsymbol{s}}$ tilts away from the verical columns $\hat{\boldsymbol{y}}$.  An ideal extraction box may be aligned with the cross-dispersion axis, or ``slit aligned'' for slit-based instrument.  The right choice for extraction becomes complicated in this scenario and forms the basis of this paper.}
-  \label{fig:traceSchematic}
-\end{figure*}
 
 \subsection{Cartesian pixels to spectrum-centric coordinates}
 
