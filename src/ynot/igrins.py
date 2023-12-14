@@ -34,14 +34,14 @@ class IGRINSEchellogram(nn.Module):
             Default: False
     """
 
-    def __init__(self, device="cuda", ybounds=(425, 510), dense_sky=False):
+    def __init__(self, device="cuda", ybounds=(1050, 1110), dense_sky=False):
         super().__init__()
 
         self.device = device
         self.y0 = ybounds[0]
         self.ymax = ybounds[1]
         self.ny = self.ymax - self.y0
-        self.fiducial = torch.tensor([21779.0, 0.310], device=device).double()
+        self.fiducial = torch.tensor([15604.084, 0.1056685], device=device).double()
 
         self.nx = 2048
         self.xvec = torch.arange(0, self.nx, device=device).double()
@@ -61,7 +61,7 @@ class IGRINSEchellogram(nn.Module):
 
         self.s_coeffs = nn.Parameter(
             torch.tensor(
-                [14.635, 0.20352, -0.004426, 0.0],
+                [-20.0, 0.25, 0.1, -7.03874991e-05, 0.0], # has different shape and meaning for s_of_xy_alt!
                 requires_grad=True,
                 dtype=torch.float64,
                 device=device,
@@ -100,7 +100,7 @@ class IGRINSEchellogram(nn.Module):
         )
 
         # Set the s(x,y), and λ(x,y) coordinates
-        self.ss = self.s_of_xy(self.s_coeffs)
+        self.ss = self.s_of_xy_alt(self.s_coeffs)
         self.λλ = self.lam_xy(self.lam_coeffs)
         self.emask = self.edge_mask(self.smoothness)
         self.λλ_min = self.λλ.min().detach().item()
@@ -186,6 +186,20 @@ class IGRINSEchellogram(nn.Module):
         y0, kk, dy0_dx, kk_x = params
         s_out = (kk + kk_x / 100 * self.xx) * ((self.yy - y0) - dy0_dx * self.xx)
         return s_out
+    
+    def s_of_xy_alt(self, params):
+        """
+        The along-slit coordinate :math:`s` as a function of :math:`(x,y)`, given coefficients
+
+        Args:
+            params (torch.tensor or tuple): the polynomial weights, first order in :math:`x` and :math:`y`
+        Returns:
+            (torch.tensor): the 2D surface map :math:`s(x,y)`
+        """
+        # kk is the platescale in y: 14 arcsec in ~ 55 pixels = 0.25 arcsec/pixel
+        y0, kk, dy0_dx, dy_quad, kk_x = params
+        s_out = (kk) * ((self.yy - y0) - dy0_dx * self.xx - dy_quad * self.xx**2)
+        return s_out
 
     def edge_mask(self, log_smoothness):
         r"""The soft-edge pixel mask defined by the extent of the spectrograph slit length
@@ -204,7 +218,7 @@ class IGRINSEchellogram(nn.Module):
             (torch.tensor): the 2D surface map :math:`m_e(x,y)`
         """
         arg1 = self.ss - 0.0
-        arg2 = 12.0 - self.ss
+        arg2 = 14.0 - self.ss
         bottom_edge = torch.sigmoid(arg1 / torch.exp(log_smoothness))
         top_edge = torch.sigmoid(arg2 / torch.exp(log_smoothness))
         return bottom_edge * top_edge
@@ -307,7 +321,7 @@ class IGRINSEchellogram(nn.Module):
 
     def generative_model(self, index):
         """The generative model resembles echelle spectra traces in astronomy data"""
-        self.ss = self.s_of_xy(self.s_coeffs)
+        self.ss = self.s_of_xy_alt(self.s_coeffs)
         self.λλ = self.lam_xy(self.lam_coeffs)
         self.emask = self.edge_mask(self.smoothness)
         sky_model = self.sky_model_function()
